@@ -1,0 +1,246 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [citext]
+}
+
+enum Role {
+  student
+  teacher
+}
+
+enum Locale {
+  hy
+  en
+}
+
+enum Track {
+  exam
+  depth
+}
+
+enum StepType {
+  lesson
+  quiz
+  assignment
+}
+
+enum Pace {
+  light
+  normal
+  intense
+}
+
+enum UserStepStatus {
+  locked
+  active
+  done
+}
+
+model User {
+  id                String            @id @default(uuid()) @db.Uuid
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  name              String
+  email             String            @unique @db.Citext
+  passwordHash      String            @map("password_hash")
+  role              Role              @default(student)
+  locale            Locale            @default(hy)
+  authoredTemplates RoadmapTemplate[] @relation("TemplateAuthor")
+  uploadedMaterials StepMaterial[]    @relation("MaterialUploader")
+  gradedSubmissions Submission[]      @relation("SubmissionGrader")
+  answeredQuestions MentorQuestion[]  @relation("QuestionAnswerer")
+  enrollments       Enrollment[]
+
+  @@map("users")
+}
+
+model Subject {
+  id          String            @id @default(uuid()) @db.Uuid
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  title       String
+  slug        String            @unique
+  icon        String?
+  isActive    Boolean           @default(true) @map("is_active")
+  templates   RoadmapTemplate[]
+  enrollments Enrollment[]
+
+  @@map("subjects")
+}
+
+model RoadmapTemplate {
+  id          String         @id @default(uuid()) @db.Uuid
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  subjectId   String         @map("subject_id") @db.Uuid
+  track       Track
+  title       String
+  description String
+  authorId    String         @map("author_id") @db.Uuid
+  isPublished Boolean        @default(false) @map("is_published")
+  subject     Subject        @relation(fields: [subjectId], references: [id])
+  author      User           @relation("TemplateAuthor", fields: [authorId], references: [id])
+  steps       TemplateStep[]
+  enrollments Enrollment[]
+
+  @@index([subjectId, track])
+  @@map("roadmap_templates")
+}
+
+model TemplateStep {
+  id               String          @id @default(uuid()) @db.Uuid
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  templateId       String          @map("template_id") @db.Uuid
+  orderIndex       Int             @map("order_index")
+  title            String
+  description      String
+  type             StepType
+  passScore        Int             @default(60) @map("pass_score")
+  maxAttempts      Int?            @default(3) @map("max_attempts")
+  estimatedMinutes Int             @map("estimated_minutes")
+  template         RoadmapTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  materials        StepMaterial[]
+  questions        Question[]
+  userSteps        UserStep[]
+
+  @@unique([templateId, orderIndex])
+  @@map("template_steps")
+}
+
+model StepMaterial {
+  id             String       @id @default(uuid()) @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  templateStepId String       @map("template_step_id") @db.Uuid
+  fileKey        String       @map("file_key")
+  fileName       String       @map("file_name")
+  mimeType       String       @map("mime_type")
+  sizeBytes      BigInt       @map("size_bytes")
+  uploadedById   String       @map("uploaded_by") @db.Uuid
+  templateStep   TemplateStep @relation(fields: [templateStepId], references: [id], onDelete: Cascade)
+  uploadedBy     User         @relation("MaterialUploader", fields: [uploadedById], references: [id])
+
+  @@map("step_materials")
+}
+
+model Question {
+  id             String       @id @default(uuid()) @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  templateStepId String       @map("template_step_id") @db.Uuid
+  orderIndex     Int          @map("order_index")
+  text           String
+  options        Json         @db.JsonB
+  correctIndex   Int          @map("correct_index")
+  explanation    String
+  templateStep   TemplateStep @relation(fields: [templateStepId], references: [id], onDelete: Cascade)
+
+  @@unique([templateStepId, orderIndex])
+  @@map("questions")
+}
+
+model Enrollment {
+  id              String           @id @default(uuid()) @db.Uuid
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  userId          String           @map("user_id") @db.Uuid
+  subjectId       String           @map("subject_id") @db.Uuid
+  templateId      String           @map("template_id") @db.Uuid
+  track           Track
+  pace            Pace
+  wantsMentorQa   Boolean          @map("wants_mentor_qa")
+  rawAnswers      Json             @map("raw_answers") @db.JsonB
+  startedAt       DateTime         @map("started_at") @db.Timestamptz(6)
+  completedAt     DateTime?        @map("completed_at") @db.Timestamptz(6)
+  user            User             @relation(fields: [userId], references: [id])
+  subject         Subject          @relation(fields: [subjectId], references: [id])
+  template        RoadmapTemplate  @relation(fields: [templateId], references: [id])
+  userSteps       UserStep[]
+  mentorQuestions MentorQuestion[]
+
+  @@index([userId, subjectId])
+  @@map("enrollments")
+}
+
+model UserStep {
+  id              String           @id @default(uuid()) @db.Uuid
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  enrollmentId    String           @map("enrollment_id") @db.Uuid
+  templateStepId  String           @map("template_step_id") @db.Uuid
+  orderIndex      Int              @map("order_index")
+  status          UserStepStatus   @default(locked)
+  score           Int?
+  attempts        Int              @default(0)
+  dueDate         DateTime?        @map("due_date") @db.Date
+  activatedAt     DateTime?        @map("activated_at") @db.Timestamptz(6)
+  completedAt     DateTime?        @map("completed_at") @db.Timestamptz(6)
+  enrollment      Enrollment       @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  templateStep    TemplateStep     @relation(fields: [templateStepId], references: [id])
+  submissions     Submission[]
+  quizAttempts    QuizAttempt[]
+  mentorQuestions MentorQuestion[]
+
+  @@unique([enrollmentId, templateStepId])
+  @@index([enrollmentId, orderIndex])
+  @@map("user_steps")
+}
+
+model Submission {
+  id          String    @id @default(uuid()) @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  userStepId  String    @map("user_step_id") @db.Uuid
+  fileKey     String    @map("file_key")
+  fileName    String    @map("file_name")
+  mimeType    String    @map("mime_type")
+  sizeBytes   BigInt    @map("size_bytes")
+  submittedAt DateTime  @map("submitted_at") @db.Timestamptz(6)
+  grade       Int?
+  feedback    String?
+  gradedById  String?   @map("graded_by") @db.Uuid
+  gradedAt    DateTime? @map("graded_at") @db.Timestamptz(6)
+  userStep    UserStep  @relation(fields: [userStepId], references: [id], onDelete: Cascade)
+  gradedBy    User?     @relation("SubmissionGrader", fields: [gradedById], references: [id])
+
+  @@map("submissions")
+}
+
+model QuizAttempt {
+  id            String   @id @default(uuid()) @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  userStepId    String   @map("user_step_id") @db.Uuid
+  attemptNumber Int      @map("attempt_number")
+  answers       Json     @db.JsonB
+  score         Int
+  passed        Boolean
+  userStep      UserStep @relation(fields: [userStepId], references: [id], onDelete: Cascade)
+
+  @@unique([userStepId, attemptNumber])
+  @@map("quiz_attempts")
+}
+
+model MentorQuestion {
+  id           String     @id @default(uuid()) @db.Uuid
+  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  enrollmentId String     @map("enrollment_id") @db.Uuid
+  userStepId   String?    @map("user_step_id") @db.Uuid
+  body         String
+  answer       String?
+  answeredById String?    @map("answered_by") @db.Uuid
+  answeredAt   DateTime?  @map("answered_at") @db.Timestamptz(6)
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  userStep     UserStep?  @relation(fields: [userStepId], references: [id])
+  answeredBy   User?      @relation("QuestionAnswerer", fields: [answeredById], references: [id])
+
+  @@map("mentor_questions")
+}
