@@ -6,6 +6,7 @@ import { parseBody, withErrorHandling } from "@/lib/api";
 import { ApiError } from "@/lib/errors";
 import { setAuthCookie, signToken } from "@/lib/jwt";
 import { serializeUser } from "@/lib/serialize";
+import { RATE_LIMITS, clientIp, enforceRateLimit } from "@/lib/rateLimit";
 
 const BCRYPT_COST = 12;
 
@@ -18,6 +19,9 @@ const registerSchema = z.object({
 
 export const POST = withErrorHandling(async (req: NextRequest) => {
   const body = await parseBody(req, registerSchema);
+
+  // SPEC.md §11.1: throttle mass-registration per IP.
+  enforceRateLimit(`register:${clientIp(req)}`, RATE_LIMITS.register);
 
   const existing = await prisma.user.findUnique({ where: { email: body.email } });
   if (existing) {

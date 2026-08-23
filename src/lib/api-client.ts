@@ -468,6 +468,13 @@ export function teacherListStuck() {
   return apiFetch<{ students: ApiStuckStudent[] }>("/teacher/students/stuck");
 }
 
+export function teacherResetAttempts(userStepId: string) {
+  return apiFetch<{ step: { id: string; attempts: number } }>(
+    `/teacher/user-steps/${userStepId}/reset-attempts`,
+    { method: "POST" }
+  );
+}
+
 export type ApiTeacherQuestion = {
   id: string;
   body: string;

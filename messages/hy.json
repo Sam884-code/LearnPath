@@ -189,6 +189,9 @@
     "stuckTitle": "Դժվարացած աշակերտներ",
     "stuckEmpty": "Դժվարացած աշակերտներ չկան",
     "attemptsUsed": "{used}/{max} փորձ",
+    "resetAttempts": "Զրոյացնել փորձերը",
+    "resetting": "Զրոյացվում է...",
+    "resetDone": "Փորձերը զրոյացվեցին",
     "questionsTitle": "Հարցերի արկղ",
     "questionsEmpty": "Անպատասխան հարցեր չկան",
     "showAnswered": "Ցույց տալ բոլորը",
@@ -212,6 +215,7 @@
     "FILE_TOO_LARGE": "Ֆայլը չափազանց մեծ է",
     "UNSUPPORTED_FILE_TYPE": "Ֆայլի այս տեսակը թույլատրված չէ",
     "VALIDATION_ERROR": "Տվյալները սխալ են լրացված",
+    "RATE_LIMITED": "Չափազանց շատ փորձեր։ Փորձիր մի փոքր ուշ",
     "NETWORK_ERROR": "Կապի խնդիր։ Ստուգիր ինտերնետը",
     "INTERNAL_ERROR": "Սերվերի սխալ։ Փորձիր մի փոքր ուշ",
     "default": "Ինչ-որ բան սխալ գնաց"

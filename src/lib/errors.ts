@@ -14,7 +14,9 @@ export type ErrorCode =
   | "ALREADY_ENROLLED"
   | "FILE_TOO_LARGE"
   | "UNSUPPORTED_FILE_TYPE"
-  | "VALIDATION_ERROR";
+  | "VALIDATION_ERROR"
+  // Post-MVP (SPEC.md §11.1): too many auth attempts.
+  | "RATE_LIMITED";
 
 export class ApiError extends Error {
   status: number;

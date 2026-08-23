@@ -15,6 +15,10 @@ const baseSchema = z.object({
   R2_SECRET_ACCESS_KEY: z.string().optional(),
   R2_BUCKET_NAME: z.string().optional(),
   R2_PUBLIC_URL: z.string().optional(),
+  // Observability (SPEC.md §11.2) and rate-limit overrides (§11.1). All optional.
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error", "silent"]).optional(),
+  RATE_LIMIT_LOGIN_MAX: z.string().optional(),
+  RATE_LIMIT_REGISTER_MAX: z.string().optional(),
 });
 
 // When STORAGE_DRIVER=r2, the R2 credentials become required.

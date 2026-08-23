@@ -28,6 +28,7 @@ export function errorMessage(
     "FILE_TOO_LARGE",
     "UNSUPPORTED_FILE_TYPE",
     "VALIDATION_ERROR",
+    "RATE_LIMITED",
     "NETWORK_ERROR",
     "INTERNAL_ERROR",
   ]);

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import type { ZodType } from "zod";
 import { ApiError, errorBody } from "./errors";
+import { logger } from "./logger";
 
 export async function parseBody<T>(req: NextRequest, schema: ZodType<T>): Promise<T> {
   let json: unknown;
@@ -32,7 +34,16 @@ export function withErrorHandling(handler: RouteHandler): RouteHandler {
       if (e instanceof ApiError) {
         return NextResponse.json(errorBody(e.code, e.message), { status: e.status });
       }
-      console.error(e);
+      // Map known Prisma errors to clean responses instead of a blanket 500.
+      // P2023 = malformed value for a column (e.g. a non-UUID id in the path);
+      // P2025 = required record not found. Both mean "no such resource".
+      if (e instanceof Prisma.PrismaClientKnownRequestError && (e.code === "P2023" || e.code === "P2025")) {
+        return NextResponse.json(errorBody("NOT_FOUND", "Resource not found"), { status: 404 });
+      }
+      // Structured log with request context (SPEC.md §11.2) so unexpected 500s
+      // are traceable. `err` is Pino's serialized-error key. Guarded with
+      // optional chaining — the last-resort handler must never throw itself.
+      logger.error({ err: e, method: req?.method, path: req?.nextUrl?.pathname }, "unhandled route error");
       // "INTERNAL_ERROR" isn't in SPEC.md §5.1's closed code list — this is a
       // last-resort fallback for genuinely unexpected failures, kept in the
       // same { error: { code, message } } shape as every other response.

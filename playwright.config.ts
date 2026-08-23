@@ -37,6 +37,11 @@ export default defineConfig({
       STORAGE_DRIVER: "local",
       LOCAL_STORAGE_PATH: E2E_STORAGE_PATH,
       NEXT_PUBLIC_APP_URL: E2E_BASE_URL,
+      // Register limit raised so the many per-run signups don't trip it; login
+      // limit pinned to 5 so the rate-limit e2e test can deterministically hit it.
+      RATE_LIMIT_REGISTER_MAX: "1000",
+      RATE_LIMIT_LOGIN_MAX: "5",
+      LOG_LEVEL: "silent",
     },
   },
 });

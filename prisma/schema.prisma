@@ -127,6 +127,7 @@ model StepMaterial {
   templateStep   TemplateStep @relation(fields: [templateStepId], references: [id], onDelete: Cascade)
   uploadedBy     User         @relation("MaterialUploader", fields: [uploadedById], references: [id])
 
+  @@index([templateStepId])
   @@map("step_materials")
 }
 
@@ -210,6 +211,7 @@ model Submission {
   userStep    UserStep  @relation(fields: [userStepId], references: [id], onDelete: Cascade)
   gradedBy    User?     @relation("SubmissionGrader", fields: [gradedById], references: [id])
 
+  @@index([userStepId])
   @@map("submissions")
 }
 
@@ -242,5 +244,6 @@ model MentorQuestion {
   userStep     UserStep?  @relation(fields: [userStepId], references: [id])
   answeredBy   User?      @relation("QuestionAnswerer", fields: [answeredById], references: [id])
 
+  @@index([enrollmentId])
   @@map("mentor_questions")
 }

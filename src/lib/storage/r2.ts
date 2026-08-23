@@ -34,7 +34,15 @@ export class R2StorageDriver implements StorageDriver {
   }
 
   async getSignedDownloadUrl(key: string, expiresInSeconds: number): Promise<string> {
-    const command = new GetObjectCommand({ Bucket: this.bucket, Key: key });
+    // SPEC.md §11.4: force a download rather than inline render, so an uploaded
+    // file can never be interpreted by the browser (defence in depth alongside
+    // content sniffing). The response-content-disposition is baked into the
+    // signature, so a client can't strip it.
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      ResponseContentDisposition: "attachment",
+    });
     return getSignedUrl(this.client, command, { expiresIn: expiresInSeconds });
   }
 

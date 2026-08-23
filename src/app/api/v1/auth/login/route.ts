@@ -6,6 +6,7 @@ import { parseBody, withErrorHandling } from "@/lib/api";
 import { ApiError } from "@/lib/errors";
 import { setAuthCookie, signToken } from "@/lib/jwt";
 import { serializeUser } from "@/lib/serialize";
+import { RATE_LIMITS, clientIp, enforceRateLimit } from "@/lib/rateLimit";
 
 const loginSchema = z.object({
   email: z.string().email("Must be a valid email"),
@@ -14,6 +15,9 @@ const loginSchema = z.object({
 
 export const POST = withErrorHandling(async (req: NextRequest) => {
   const body = await parseBody(req, loginSchema);
+
+  // SPEC.md §11.1: throttle brute-force attempts per IP + email.
+  enforceRateLimit(`login:${clientIp(req)}:${body.email.toLowerCase()}`, RATE_LIMITS.login);
 
   const user = await prisma.user.findUnique({ where: { email: body.email } });
   if (!user || !bcrypt.compareSync(body.password, user.passwordHash)) {

@@ -457,3 +457,74 @@ Qualitative check (5 short interviews): *"Do you know what you should be doing r
 Payments · notifications/reminders · mobile app · AI-generated roadmaps · video hosting · multiple active steps · student chat · certificates · analytics dashboard for teachers · admin panel.
 
 Add only after the beta metrics above are met.
+
+---
+
+## 11. Post-MVP: production hardening & scale
+
+Added after the MVP shipped, to make the product production-ready at scale. These
+are **implemented**, not deferred.
+
+### 11.1 Login rate-limiting / brute-force protection
+
+Authentication endpoints are the primary brute-force surface. Enforce a fixed
+window limiter:
+
+| Endpoint | Key | Limit | Window |
+|---|---|---|---|
+| `POST /auth/login` | client IP + email | 5 attempts | 15 minutes |
+| `POST /auth/register` | client IP | 10 attempts | 60 minutes |
+
+- On exceed → `429` with error code `RATE_LIMITED`.
+- The limiter lives behind a **`RateLimitStore` interface** (like the storage
+  driver). The default `MemoryRateLimitStore` is correct for a single instance.
+  **At scale (multiple serverless instances) it MUST be swapped for a shared
+  store** (Upstash Redis / `@upstash/ratelimit`) — an in-memory counter is
+  per-instance and therefore only a soft limit behind a load balancer. This is
+  the one scale caveat to close before high traffic.
+- Client IP is read from `x-forwarded-for` (Vercel sets it), falling back to a
+  constant so the limiter still functions locally.
+- Limits are overridable via env (`RATE_LIMIT_LOGIN_MAX`, `RATE_LIMIT_REGISTER_MAX`)
+  so tests and staging can relax them.
+
+### 11.2 Structured logging & observability
+
+- All server-side logging goes through a single **Pino** logger
+  (`src/lib/logger.ts`) — structured JSON to stdout, which Vercel captures.
+- Levels: `info` (normal lifecycle), `warn` (handled/expected problems, e.g. a
+  rate-limit trip), `error` (unexpected failures). Controlled by `LOG_LEVEL`
+  (default `info`; `debug`/`silent` available).
+- **No bare `console.*` in server code.** The central error handler logs every
+  unexpected 500 with the error object and request context (method + path).
+- Each log line carries context metadata (`{ method, path, code }`) so failures
+  are traceable without a full APM. A hosted APM (Sentry/Datadog) can subscribe
+  to the same stream later without code changes.
+
+### 11.3 Enhanced teacher controls
+
+Beyond authoring and grading, teachers get override controls to unblock students:
+
+- **Reset attempts** — `POST /teacher/user-steps/:id/reset-attempts`. Sets a
+  student's active step `attempts` back to 0 so a student who exhausted their
+  quiz attempts (and appears in the "stuck" list, §4) can try again. Only valid
+  on an `active` step; never changes `status` (the one-active-step rule is
+  untouched). Surfaced as a button on the stuck-students screen.
+
+### 11.4 Real Cloudflare R2 file management
+
+The storage layer (§5.6) already abstracts R2 behind `StorageDriver`. Production
+requirements for the R2 driver:
+
+- **Bucket is private.** Files are never public; access is always via a
+  15-minute pre-signed GET URL.
+- **Key structure**: `submissions/{userStepId}/{uuid}-{filename}` and
+  `materials/{templateStepId}/{uuid}-{filename}`. The UUID prevents collisions
+  and guessing.
+- **Safe downloads**: pre-signed URLs set `ResponseContentDisposition: attachment`
+  so a browser downloads rather than renders an uploaded file inline (defence in
+  depth alongside content sniffing).
+- **Cleanup**: deleting a submission (only while ungraded) deletes its R2 object
+  in the same operation — no orphaned blobs.
+- **Config** is validated on boot: when `STORAGE_DRIVER=r2`, the four `R2_*`
+  variables are required (§7 env validation), so a misconfigured deploy fails
+  fast rather than at first upload.

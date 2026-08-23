@@ -189,6 +189,9 @@
     "stuckTitle": "Stuck students",
     "stuckEmpty": "No stuck students",
     "attemptsUsed": "{used}/{max} attempts",
+    "resetAttempts": "Reset attempts",
+    "resetting": "Resetting...",
+    "resetDone": "Attempts reset",
     "questionsTitle": "Questions inbox",
     "questionsEmpty": "No unanswered questions",
     "showAnswered": "Show all",
@@ -212,6 +215,7 @@
     "FILE_TOO_LARGE": "The file is too large",
     "UNSUPPORTED_FILE_TYPE": "This file type is not allowed",
     "VALIDATION_ERROR": "Some fields are filled in incorrectly",
+    "RATE_LIMITED": "Too many attempts. Please try again later",
     "NETWORK_ERROR": "Connection problem. Check your internet",
     "INTERNAL_ERROR": "Server error. Try again shortly",
     "default": "Something went wrong"
