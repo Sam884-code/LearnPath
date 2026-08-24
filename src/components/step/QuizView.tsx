@@ -318,12 +318,12 @@ function QuizResult({
 
       <div
         className="rounded-2xl p-6 text-center"
-        style={{ background: result.passed ? "var(--accent-soft)" : "var(--danger-soft)" }}
+        style={{ background: result.passed ? "var(--success-soft)" : "var(--danger-soft)" }}
       >
-        <p className="text-3xl font-bold" style={{ color: result.passed ? "var(--accent-text)" : "var(--danger)" }}>
+        <p className="text-3xl font-bold" style={{ color: result.passed ? "var(--success-text)" : "var(--danger)" }}>
           {result.score}%
         </p>
-        <p className="mt-1 text-sm font-semibold" style={{ color: result.passed ? "var(--accent-text)" : "var(--danger)" }}>
+        <p className="mt-1 text-sm font-semibold" style={{ color: result.passed ? "var(--success-text)" : "var(--danger)" }}>
           {result.passed ? t("quiz.passed") : t("quiz.failed")}
         </p>
       </div>
@@ -337,7 +337,7 @@ function QuizResult({
               key={q.id}
               className="rounded-xl border p-4"
               style={{
-                borderColor: correct ? "var(--accent)" : "var(--danger)",
+                borderColor: correct ? "var(--success)" : "var(--danger)",
                 background: "var(--surface)",
               }}
             >
@@ -348,7 +348,7 @@ function QuizResult({
                     {q.text}
                   </p>
                   {r && (
-                    <p className="mt-1 text-xs" style={{ color: "var(--accent-text)" }}>
+                    <p className="mt-1 text-xs" style={{ color: "var(--success-text)" }}>
                       {q.options[r.correct_index]}
                     </p>
                   )}
@@ -420,8 +420,8 @@ function MentorPrompt({ t, enrollmentId, userStepId }: { t: T; enrollmentId: str
 
   if (sent) {
     return (
-      <div className="mt-6 rounded-2xl p-5" style={{ background: "var(--accent-soft)" }}>
-        <p className="text-sm font-medium" style={{ color: "var(--accent-text)" }}>
+      <div className="mt-6 rounded-2xl p-5" style={{ background: "var(--success-soft)" }}>
+        <p className="text-sm font-medium" style={{ color: "var(--success-text)" }}>
           {t("quiz.mentorSent")}
         </p>
       </div>

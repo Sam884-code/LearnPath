@@ -2,17 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { teacherListStuck, teacherResetAttempts, type ApiStuckStudent } from "@/lib/api-client";
 import { errorMessage } from "@/lib/errorMessages";
 import { TeacherShell } from "@/components/teacher/TeacherShell";
 import { ErrorBanner } from "@/components/ui";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 export default function StuckPage() {
   const t = useTranslations();
   const [students, setStudents] = useState<ApiStuckStudent[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [resettingId, setResettingId] = useState<string | null>(null);
-  const [resetDoneIds, setResetDoneIds] = useState<Set<string>>(new Set());
 
   function load() {
     teacherListStuck()
@@ -30,9 +33,9 @@ export default function StuckPage() {
     setResettingId(userStepId);
     try {
       await teacherResetAttempts(userStepId);
-      setResetDoneIds((prev) => new Set(prev).add(userStepId));
-      // The student is no longer "stuck" — refresh the list after a beat.
-      setTimeout(load, 800);
+      toast.success(t("teacher.resetDone"));
+      // The student is no longer "stuck" — refresh the list.
+      load();
     } catch (err) {
       setError(errorMessage(t, err));
     } finally {
@@ -63,41 +66,28 @@ export default function StuckPage() {
       ) : (
         <ul className="flex flex-col gap-2">
           {students.map((s) => (
-            <li
-              key={s.enrollment_id}
-              className="flex flex-wrap items-center justify-between gap-2 rounded-lg border px-4 py-3"
-              style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-            >
-              <div>
-                <span className="block text-sm font-semibold" style={{ color: "var(--text)" }}>
-                  {s.student.name}
-                </span>
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  {s.subject.title} · {s.step.title}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span
-                  className="rounded-full px-2.5 py-1 text-xs font-medium"
-                  style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
-                >
-                  {t("teacher.attemptsUsed", { used: s.step.attempts, max: s.step.max_attempts ?? "∞" })}
-                </span>
-                {resetDoneIds.has(s.step.id) ? (
-                  <span className="text-xs font-medium" style={{ color: "var(--accent-text)" }}>
-                    {t("teacher.resetDone")}
+            <li key={s.enrollment_id}>
+              <Card className="flex flex-row flex-wrap items-center justify-between gap-2 rounded-2xl px-4 py-3">
+                <div>
+                  <span className="block text-sm font-semibold text-foreground">{s.student.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {s.subject.title} · {s.step.title}
                   </span>
-                ) : (
-                  <button
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="warning">
+                    {t("teacher.attemptsUsed", { used: s.step.attempts, max: s.step.max_attempts ?? "∞" })}
+                  </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={() => reset(s.step.id)}
                     disabled={resettingId === s.step.id}
-                    className="rounded-lg border px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
-                    style={{ borderColor: "var(--border)", color: "var(--accent-text)" }}
                   >
                     {resettingId === s.step.id ? t("teacher.resetting") : t("teacher.resetAttempts")}
-                  </button>
-                )}
-              </div>
+                  </Button>
+                </div>
+              </Card>
             </li>
           ))}
         </ul>

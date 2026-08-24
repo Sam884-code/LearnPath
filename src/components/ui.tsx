@@ -1,10 +1,14 @@
 "use client";
 
-import { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
+import { ComponentProps, InputHTMLAttributes, ReactNode } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-// Shared primitives for the student UI. Calm and generously spaced by default;
-// colors come from the CSS variables in globals.css so the palette stays in
-// one place.
+// Shared app primitives, now built on shadcn/ui underneath. Colors come from the
+// CSS variables in globals.css (mapped to shadcn tokens) so the palette stays in
+// one place and both light/dark themes work.
 
 export function Screen({ children }: { children: ReactNode }) {
   return (
@@ -14,49 +18,44 @@ export function Screen({ children }: { children: ReactNode }) {
   );
 }
 
+// Full-width primary CTA, wrapping shadcn Button with a loading state.
 export function PrimaryButton({
   children,
   loading,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean }) {
+}: ComponentProps<typeof Button> & { loading?: boolean }) {
   return (
-    <button
+    <Button
       {...props}
       disabled={props.disabled || loading}
-      className="w-full rounded-2xl px-5 py-4 text-base font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-45"
-      style={{ background: "var(--accent)" }}
+      className="h-auto w-full rounded-xl py-4 text-base font-semibold"
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
+// Labelled text input, wrapping shadcn Input + Label.
 export function TextField({
   label,
   hint,
+  id,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
+  const inputId = id ?? `field-${label.replace(/\s+/g, "-").toLowerCase()}`;
   return (
-    <label className="block">
-      <span className="mb-2 block text-sm font-medium" style={{ color: "var(--text-muted)" }}>
+    <div className="block">
+      <Label htmlFor={inputId} className="mb-2 text-sm font-medium text-muted-foreground">
         {label}
-      </span>
-      <input
-        {...props}
-        className="w-full rounded-xl border bg-white px-4 py-3.5 text-base outline-none transition-colors focus:border-current"
-        style={{ borderColor: "var(--border)", color: "var(--text)" }}
-      />
-      {hint && (
-        <span className="mt-1.5 block text-xs" style={{ color: "var(--text-muted)" }}>
-          {hint}
-        </span>
-      )}
-    </label>
+      </Label>
+      <Input id={inputId} {...props} className="h-auto rounded-xl px-4 py-3.5 text-base" />
+      {hint && <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p>}
+    </div>
   );
 }
 
-// A large tappable option card — the core interaction of onboarding. Optional
-// `description` supports Q2's two-line choice cards.
+// A large tappable option card — the core interaction of onboarding. Adds a
+// tap/hover micro-interaction. Optional `description` supports two-line cards.
 export function ChoiceCard({
   title,
   description,
@@ -71,8 +70,11 @@ export function ChoiceCard({
   onClick: () => void;
 }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
+      whileTap={{ scale: 0.98 }}
+      whileHover={{ y: -1 }}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
       className="flex w-full items-center gap-4 rounded-2xl border-2 px-5 py-5 text-left transition-colors"
       style={{
         borderColor: selected ? "var(--accent)" : "var(--border)",
@@ -100,7 +102,7 @@ export function ChoiceCard({
       >
         {selected ? "✓" : ""}
       </span>
-    </button>
+    </motion.button>
   );
 }
 

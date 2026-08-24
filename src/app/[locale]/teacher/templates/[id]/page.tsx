@@ -13,18 +13,28 @@ import {
   type ApiTemplateStep,
   type StepType,
 } from "@/lib/api-client";
+import { toast } from "sonner";
 import { errorMessage } from "@/lib/errorMessages";
 import { TeacherShell } from "@/components/teacher/TeacherShell";
 import { ErrorBanner } from "@/components/ui";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 type T = ReturnType<typeof useTranslations>;
+
+// Native <select> styled to match shadcn Input.
+const SELECT_CLASS =
+  "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50";
 
 export default function TemplateEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const t = useTranslations();
   const [template, setTemplate] = useState<ApiTemplateDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function reload() {
@@ -60,11 +70,10 @@ export default function TemplateEditorPage({ params }: { params: Promise<{ id: s
 
   async function publish() {
     setError(null);
-    setNotice(null);
     setBusy(true);
     try {
       await teacherPublishTemplate(id);
-      setNotice(t("teacher.publishedOk"));
+      toast.success(t("teacher.publishedOk"));
       await reload();
     } catch (err) {
       setError(errorMessage(t, err));
@@ -75,7 +84,7 @@ export default function TemplateEditorPage({ params }: { params: Promise<{ id: s
 
   return (
     <TeacherShell>
-      <Link href="/teacher/templates" className="text-sm" style={{ color: "var(--text-muted)" }}>
+      <Link href="/teacher/templates" className="text-sm text-muted-foreground">
         ← {t("teacher.back")}
       </Link>
 
@@ -93,37 +102,19 @@ export default function TemplateEditorPage({ params }: { params: Promise<{ id: s
         <>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl font-bold" style={{ color: "var(--text)" }}>
-                {template.title}
-              </h1>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+              <h1 className="text-xl font-bold text-foreground">{template.title}</h1>
+              <p className="text-xs text-muted-foreground">
                 {template.subject.title} · {t(template.track === "exam" ? "teacher.trackExam" : "teacher.trackDepth")}
               </p>
             </div>
             <div className="flex items-center gap-3">
-              {notice && (
-                <span className="text-sm" style={{ color: "var(--accent-text)" }}>
-                  {notice}
-                </span>
-              )}
-              <span
-                className="rounded-full px-2.5 py-1 text-xs font-medium"
-                style={{
-                  background: template.isPublished ? "var(--accent-soft)" : "var(--surface-muted)",
-                  color: template.isPublished ? "var(--accent-text)" : "var(--text-muted)",
-                }}
-              >
+              <Badge variant={template.isPublished ? "success" : "secondary"}>
                 {template.isPublished ? t("teacher.published") : t("teacher.draft")}
-              </span>
+              </Badge>
               {!template.isPublished && (
-                <button
-                  onClick={publish}
-                  disabled={busy}
-                  className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
-                  style={{ background: "var(--accent)" }}
-                >
+                <Button onClick={publish} disabled={busy}>
                   {busy ? t("teacher.publishing") : t("teacher.publish")}
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -178,7 +169,7 @@ function StepCard({
   const typeIcon = step.type === "lesson" ? "📖" : step.type === "quiz" ? "📝" : "📤";
 
   return (
-    <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+    <Card className="gap-0 rounded-2xl p-4">
       <div className="flex items-center gap-3">
         <span
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
@@ -199,22 +190,12 @@ function StepCard({
           </span>
         </span>
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => onMove(index, -1)}
-            disabled={busy || index === 0}
-            className="rounded border px-2 py-1 text-xs disabled:opacity-30"
-            style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
-          >
+          <Button variant="outline" size="icon" className="size-7" onClick={() => onMove(index, -1)} disabled={busy || index === 0}>
             ↑
-          </button>
-          <button
-            onClick={() => onMove(index, 1)}
-            disabled={busy || index === total - 1}
-            className="rounded border px-2 py-1 text-xs disabled:opacity-30"
-            style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
-          >
+          </Button>
+          <Button variant="outline" size="icon" className="size-7" onClick={() => onMove(index, 1)} disabled={busy || index === total - 1}>
             ↓
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -245,17 +226,13 @@ function StepCard({
               onError={onError}
             />
           ) : (
-            <button
-              onClick={() => setShowQuestions(true)}
-              className="text-xs font-semibold"
-              style={{ color: "var(--accent-text)" }}
-            >
+            <Button variant="link" size="sm" className="h-auto p-0" onClick={() => setShowQuestions(true)}>
               + {t("teacher.addQuestion")}
-            </button>
+            </Button>
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -305,93 +282,47 @@ function AddStepForm({
 
   if (!open) {
     return (
-      <button
-        onClick={() => setOpen(true)}
-        className="mt-4 rounded-lg border px-4 py-2 text-sm font-semibold"
-        style={{ borderColor: "var(--border)", color: "var(--accent-text)" }}
-      >
+      <Button variant="outline" className="mt-4" onClick={() => setOpen(true)}>
         + {t("teacher.addStep")}
-      </button>
+      </Button>
     );
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="mt-4 grid gap-3 rounded-lg border p-4 sm:grid-cols-2"
-      style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-    >
-      <label className="text-sm sm:col-span-2">
-        <span className="mb-1 block" style={{ color: "var(--text-muted)" }}>
-          {t("teacher.stepTitle")}
-        </span>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-          className="w-full rounded border px-3 py-2"
-          style={{ borderColor: "var(--border)" }}
-        />
-      </label>
-      <label className="text-sm">
-        <span className="mb-1 block" style={{ color: "var(--text-muted)" }}>
-          {t("teacher.stepType")}
-        </span>
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value as StepType)}
-          className="w-full rounded border px-3 py-2"
-          style={{ borderColor: "var(--border)" }}
-        >
+    <form onSubmit={onSubmit} className="mt-4 grid gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-2">
+      <div className="text-sm sm:col-span-2">
+        <Label className="mb-1 text-muted-foreground">{t("teacher.stepTitle")}</Label>
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+      </div>
+      <div className="text-sm">
+        <Label className="mb-1 text-muted-foreground">{t("teacher.stepType")}</Label>
+        <select value={type} onChange={(e) => setType(e.target.value as StepType)} className={SELECT_CLASS}>
           <option value="lesson">{t("stepType.lesson")}</option>
           <option value="quiz">{t("stepType.quiz")}</option>
           <option value="assignment">{t("stepType.assignment")}</option>
         </select>
-      </label>
-      <label className="text-sm">
-        <span className="mb-1 block" style={{ color: "var(--text-muted)" }}>
-          {t("teacher.estimatedMinutes")}
-        </span>
-        <input
+      </div>
+      <div className="text-sm">
+        <Label className="mb-1 text-muted-foreground">{t("teacher.estimatedMinutes")}</Label>
+        <Input
           type="number"
           min={1}
           value={minutes}
           onChange={(e) => setMinutes(Number(e.target.value))}
           required
-          className="w-full rounded border px-3 py-2"
-          style={{ borderColor: "var(--border)" }}
         />
-      </label>
-      <label className="text-sm sm:col-span-2">
-        <span className="mb-1 block" style={{ color: "var(--text-muted)" }}>
-          {t("teacher.stepDescription")}
-        </span>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-          rows={2}
-          className="w-full rounded border px-3 py-2"
-          style={{ borderColor: "var(--border)" }}
-        />
-      </label>
+      </div>
+      <div className="text-sm sm:col-span-2">
+        <Label className="mb-1 text-muted-foreground">{t("teacher.stepDescription")}</Label>
+        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required rows={2} />
+      </div>
       <div className="flex gap-2 sm:col-span-2">
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
-          style={{ background: "var(--accent)" }}
-        >
+        <Button type="submit" disabled={submitting}>
           {submitting ? t("teacher.saving") : t("teacher.save")}
-        </button>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="rounded-lg border px-4 py-2 text-sm"
-          style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
-        >
+        </Button>
+        <Button type="button" variant="outline" onClick={() => setOpen(false)}>
           {t("teacher.cancel")}
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -431,18 +362,12 @@ function AddQuestionForm({
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="mt-2 flex flex-col gap-2 rounded border p-3"
-      style={{ borderColor: "var(--border)", background: "var(--surface-muted)" }}
-    >
-      <input
+    <form onSubmit={onSubmit} className="mt-2 flex flex-col gap-2 rounded-xl border border-border bg-muted/40 p-3">
+      <Input
         value={text}
         onChange={(e) => setText(e.target.value)}
         required
         placeholder={t("teacher.questionText")}
-        className="w-full rounded border px-3 py-2 text-sm"
-        style={{ borderColor: "var(--border)", background: "var(--surface)" }}
       />
       {options.map((opt, i) => (
         <div key={i} className="flex items-center gap-2">
@@ -452,53 +377,42 @@ function AddQuestionForm({
             checked={correct === i}
             onChange={() => setCorrect(i)}
             aria-label={t("teacher.correctAnswer")}
+            className="accent-[var(--accent)]"
           />
-          <input
+          <Input
             value={opt}
             onChange={(e) => setOptions((o) => o.map((v, j) => (j === i ? e.target.value : v)))}
             required
             placeholder={t("teacher.option", { n: i + 1 })}
-            className="flex-1 rounded border px-3 py-2 text-sm"
-            style={{ borderColor: "var(--border)", background: "var(--surface)" }}
+            className="flex-1"
           />
         </div>
       ))}
       {options.length < 6 && (
-        <button
+        <Button
           type="button"
+          variant="link"
+          size="sm"
+          className="h-auto self-start p-0"
           onClick={() => setOptions((o) => [...o, ""])}
-          className="self-start text-xs font-semibold"
-          style={{ color: "var(--accent-text)" }}
         >
           + {t("teacher.addOption")}
-        </button>
+        </Button>
       )}
-      <textarea
+      <Textarea
         value={explanation}
         onChange={(e) => setExplanation(e.target.value)}
         required
         rows={2}
         placeholder={t("teacher.explanation")}
-        className="w-full rounded border px-3 py-2 text-sm"
-        style={{ borderColor: "var(--border)", background: "var(--surface)" }}
       />
       <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
-          style={{ background: "var(--accent)" }}
-        >
+        <Button type="submit" size="sm" disabled={submitting}>
           {submitting ? t("teacher.saving") : t("teacher.save")}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded border px-3 py-1.5 text-sm"
-          style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
-        >
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={onCancel}>
           {t("teacher.cancel")}
-        </button>
+        </Button>
       </div>
     </form>
   );

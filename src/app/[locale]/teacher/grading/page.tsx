@@ -7,9 +7,14 @@ import {
   teacherListSubmissions,
   type ApiPendingSubmission,
 } from "@/lib/api-client";
+import { toast } from "sonner";
 import { errorMessage } from "@/lib/errorMessages";
 import { TeacherShell } from "@/components/teacher/TeacherShell";
 import { ErrorBanner } from "@/components/ui";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type T = ReturnType<typeof useTranslations>;
 
@@ -79,7 +84,6 @@ function GradeCard({
   const [grade, setGrade] = useState("");
   const [feedback, setFeedback] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState<string | null>(null);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -88,8 +92,8 @@ function GradeCard({
     setSubmitting(true);
     try {
       const res = await teacherGradeSubmission(submission.id, g, feedback);
-      setDone(res.advanced ? t("teacher.gradedAdvanced") : t("teacher.gradedStay"));
-      setTimeout(onGraded, 900);
+      toast.success(res.advanced ? t("teacher.gradedAdvanced") : t("teacher.gradedStay"));
+      onGraded();
     } catch (err) {
       onError(errorMessage(t, err));
       setSubmitting(false);
@@ -97,69 +101,40 @@ function GradeCard({
   }
 
   return (
-    <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+    <Card className="gap-0 rounded-2xl p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <span className="block text-sm font-semibold" style={{ color: "var(--text)" }}>
-            {submission.student.name}
-          </span>
-          <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-            {submission.step.title}
-          </span>
+          <span className="block text-sm font-semibold text-foreground">{submission.student.name}</span>
+          <span className="text-xs text-muted-foreground">{submission.step.title}</span>
         </div>
-        <a
-          href={`/api/v1/submissions/${submission.id}/file`}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded border px-3 py-1.5 text-xs font-medium"
-          style={{ borderColor: "var(--border)", color: "var(--accent-text)" }}
-        >
-          {submission.file_name} ↓
-        </a>
+        <Button variant="outline" size="sm" asChild>
+          <a href={`/api/v1/submissions/${submission.id}/file`} target="_blank" rel="noreferrer">
+            {submission.file_name} ↓
+          </a>
+        </Button>
       </div>
 
-      {done ? (
-        <p className="text-sm font-medium" style={{ color: "var(--accent-text)" }}>
-          {done}
-        </p>
-      ) : (
-        <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-3">
-          <label className="text-sm">
-            <span className="mb-1 block" style={{ color: "var(--text-muted)" }}>
-              {t("teacher.grade")}
-            </span>
-            <input
-              type="number"
-              min={0}
-              max={100}
-              value={grade}
-              onChange={(e) => setGrade(e.target.value)}
-              required
-              className="w-24 rounded border px-3 py-2"
-              style={{ borderColor: "var(--border)" }}
-            />
-          </label>
-          <label className="flex-1 text-sm" style={{ minWidth: 200 }}>
-            <span className="mb-1 block" style={{ color: "var(--text-muted)" }}>
-              {t("teacher.feedback")}
-            </span>
-            <input
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              className="w-full rounded border px-3 py-2"
-              style={{ borderColor: "var(--border)" }}
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
-            style={{ background: "var(--accent)" }}
-          >
-            {submitting ? t("teacher.grading") : t("teacher.submitGrade")}
-          </button>
-        </form>
-      )}
-    </div>
+      <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-3">
+        <div className="text-sm">
+          <Label className="mb-1 text-muted-foreground">{t("teacher.grade")}</Label>
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            value={grade}
+            onChange={(e) => setGrade(e.target.value)}
+            required
+            className="w-24"
+          />
+        </div>
+        <div className="flex-1 text-sm" style={{ minWidth: 200 }}>
+          <Label className="mb-1 text-muted-foreground">{t("teacher.feedback")}</Label>
+          <Input value={feedback} onChange={(e) => setFeedback(e.target.value)} />
+        </div>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? t("teacher.grading") : t("teacher.submitGrade")}
+        </Button>
+      </form>
+    </Card>
   );
 }

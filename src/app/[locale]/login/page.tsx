@@ -6,6 +6,7 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { login, getMe } from "@/lib/api-client";
 import { errorMessage } from "@/lib/errorMessages";
 import { ErrorBanner, PrimaryButton, Screen, TextField } from "@/components/ui";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function LoginPage() {
   const t = useTranslations();
@@ -37,6 +38,9 @@ export default function LoginPage() {
 
   return (
     <Screen>
+      <div className="flex justify-end">
+        <ThemeToggle />
+      </div>
       <div className="flex flex-1 flex-col justify-center">
         <header className="mb-8">
           <h1 className="text-2xl font-bold" style={{ color: "var(--text)" }}>

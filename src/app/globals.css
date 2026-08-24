@@ -1,23 +1,115 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+/* Tailwind v4 keeps its config in CSS (there is no tailwind.config.js): the
+   @theme block below IS the Tailwind theme. next-themes toggles `.dark` on
+   <html>; this variant makes `dark:` utilities respond to it. */
+@custom-variant dark (&:is(.dark *));
 
 /*
-  Calm, focused palette — warm neutrals with a single grounded teal accent.
-  Deliberately not gamified: no bright primaries, no high-saturation fills.
-  The feeling should be relief from a chaotic chat, not a reward machine.
+  Modern educational-platform palette.
+  Brand: deep indigo. Status: emerald for active/completed, amber for overdue,
+  red for errors/failures. Clean cool-slate neutrals. These custom variables are
+  the app's source of truth (read via inline styles); shadcn/ui tokens are mapped
+  onto them in @theme inline below.
 */
 :root {
-  --bg: #f6f4f1;
+  /* neutrals */
+  --bg: #f8fafc;
   --surface: #ffffff;
-  --surface-muted: #f1efeb;
-  --border: #e6e2dc;
-  --text: #211f1c;
-  --text-muted: #6d685f;
-  --accent: #1f6f63;
-  --accent-hover: #185a50;
-  --accent-soft: #e5f0ed;
-  --accent-text: #12463d;
-  --danger: #b4453a;
-  --danger-soft: #f7e8e6;
+  --surface-muted: #f1f5f9;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text-muted: #64748b;
+
+  /* brand — deep indigo */
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-soft: #e0e7ff;
+  --accent-text: #4338ca;
+
+  /* status — emerald (active / completed) */
+  --success: #059669;
+  --success-hover: #047857;
+  --success-soft: #d1fae5;
+  --success-text: #047857;
+
+  /* status — amber (overdue alerts) */
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --warning-text: #b45309;
+
+  /* status — red (errors / failed) */
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+
+  --skeleton-shine: rgba(255, 255, 255, 0.6);
+  --radius: 1rem;
+}
+
+/* Dark theme: the same variables re-valued, so the whole UI (which reads these
+   vars) responds to the theme toggle without per-component changes. */
+.dark {
+  --bg: #0b1220;
+  --surface: #151e31;
+  --surface-muted: #1e293b;
+  --border: #2a3547;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --accent-soft: #1e1b4b;
+  --accent-text: #a5b4fc;
+
+  --success: #10b981;
+  --success-hover: #34d399;
+  --success-soft: #052e24;
+  --success-text: #6ee7b7;
+
+  --warning: #f59e0b;
+  --warning-soft: #3a2a08;
+  --warning-text: #fcd34d;
+
+  --danger: #f87171;
+  --danger-soft: #3a1414;
+
+  --skeleton-shine: rgba(255, 255, 255, 0.05);
+}
+
+/* shadcn/ui token layer — maps its design-system token names (bg-primary,
+   text-foreground, border-border, rounded-lg, …) onto the palette above, plus
+   success/warning color utilities. No new color variables are defined here, so
+   there's no collision with the app's own variables, and dark mode is inherited. */
+@theme inline {
+  --font-sans: var(--font-inter), var(--font-noto-armenian), "Segoe UI", system-ui, -apple-system,
+    BlinkMacSystemFont, Arial, sans-serif;
+
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text);
+  --color-primary: var(--accent);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--surface-muted);
+  --color-secondary-foreground: var(--text);
+  --color-muted: var(--surface-muted);
+  --color-muted-foreground: var(--text-muted);
+  --color-accent: var(--accent-soft);
+  --color-accent-foreground: var(--accent-text);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: #ffffff;
+  --color-border: var(--border);
+  --color-input: var(--border);
+  --color-ring: var(--accent);
+  /* Note: we intentionally do NOT redefine --radius-{sm,md,lg,xl} here. Doing so
+     would hijack Tailwind's default rounded-* scale the whole app relies on
+     (and would invert it). The app keeps the default scale: rounded-2xl (1rem)
+     for cards, rounded-xl (0.75rem) for buttons. */
 }
 
 html {
@@ -27,7 +119,8 @@ html {
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: "Segoe UI", "Noto Sans Armenian", system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  font-family: var(--font-inter), var(--font-noto-armenian), "Segoe UI", system-ui, -apple-system,
+    BlinkMacSystemFont, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -87,7 +180,7 @@ body {
   color: var(--text-muted);
 }
 
-/* Loading-skeleton shimmer. */
+/* Loading-skeleton shimmer (theme-aware highlight). */
 .skeleton-shimmer {
   position: relative;
   overflow: hidden;
@@ -97,7 +190,7 @@ body {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  background: linear-gradient(90deg, transparent, var(--skeleton-shine), transparent);
   animation: skeleton-slide 1.4s ease-in-out infinite;
 }
 @keyframes skeleton-slide {

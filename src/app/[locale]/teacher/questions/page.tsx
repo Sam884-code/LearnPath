@@ -2,10 +2,14 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { teacherAnswerQuestion, teacherListQuestions, type ApiTeacherQuestion } from "@/lib/api-client";
 import { errorMessage } from "@/lib/errorMessages";
 import { TeacherShell } from "@/components/teacher/TeacherShell";
 import { ErrorBanner } from "@/components/ui";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 type T = ReturnType<typeof useTranslations>;
 
@@ -33,16 +37,10 @@ export default function QuestionsPage() {
   return (
     <TeacherShell>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-bold" style={{ color: "var(--text)" }}>
-          {t("teacher.questionsTitle")}
-        </h1>
-        <button
-          onClick={() => setShowAll((v) => !v)}
-          className="rounded border px-3 py-1.5 text-sm"
-          style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
-        >
+        <h1 className="text-xl font-bold text-foreground">{t("teacher.questionsTitle")}</h1>
+        <Button variant="outline" size="sm" onClick={() => setShowAll((v) => !v)}>
           {showAll ? t("teacher.showUnanswered") : t("teacher.showAnswered")}
-        </button>
+        </Button>
       </div>
 
       {error && (
@@ -92,6 +90,7 @@ function QuestionCard({
     setSubmitting(true);
     try {
       await teacherAnswerQuestion(question.id, answer);
+      toast.success(t("teacher.answered"));
       onAnswered();
     } catch (err) {
       onError(errorMessage(t, err));
@@ -100,46 +99,35 @@ function QuestionCard({
   }
 
   return (
-    <div className="rounded-lg border p-4" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+    <Card className="gap-0 rounded-2xl p-4">
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+        <span className="text-xs text-muted-foreground">
           {question.student.name} · {question.subject.title}
           {question.step && ` · ${question.step.title}`}
         </span>
       </div>
-      <p className="text-sm" style={{ color: "var(--text)" }}>
-        {question.body}
-      </p>
+      <p className="text-sm text-foreground">{question.body}</p>
 
       {question.answer ? (
         <div className="mt-3 rounded border-l-2 pl-3" style={{ borderColor: "var(--accent)" }}>
           <p className="text-xs font-semibold" style={{ color: "var(--accent-text)" }}>
             {t("teacher.answered")}
           </p>
-          <p className="text-sm" style={{ color: "var(--text)" }}>
-            {question.answer}
-          </p>
+          <p className="text-sm text-foreground">{question.answer}</p>
         </div>
       ) : (
         <form onSubmit={onSubmit} className="mt-3 flex flex-col gap-2">
-          <textarea
+          <Textarea
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             rows={2}
             placeholder={t("teacher.answerPlaceholder")}
-            className="w-full rounded border px-3 py-2 text-sm"
-            style={{ borderColor: "var(--border)" }}
           />
-          <button
-            type="submit"
-            disabled={submitting || answer.trim().length === 0}
-            className="self-start rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
-            style={{ background: "var(--accent)" }}
-          >
+          <Button type="submit" size="sm" className="self-start" disabled={submitting || answer.trim().length === 0}>
             {submitting ? t("teacher.saving") : t("teacher.sendAnswer")}
-          </button>
+          </Button>
         </form>
       )}
-    </div>
+    </Card>
   );
 }

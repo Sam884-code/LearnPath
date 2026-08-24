@@ -100,9 +100,9 @@ function GradedCard({
   return (
     <div
       className="mt-6 rounded-2xl p-5"
-      style={{ background: passed ? "var(--accent-soft)" : "var(--danger-soft)" }}
+      style={{ background: passed ? "var(--success-soft)" : "var(--danger-soft)" }}
     >
-      <p className="text-lg font-bold" style={{ color: passed ? "var(--accent-text)" : "var(--danger)" }}>
+      <p className="text-lg font-bold" style={{ color: passed ? "var(--success-text)" : "var(--danger)" }}>
         {t("assignment.gradeLabel", { score: submission.grade })}
       </p>
       {submission.feedback && (

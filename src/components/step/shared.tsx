@@ -43,7 +43,7 @@ export function StepHeader({
         {overdue && (
           <span
             className="rounded-full px-2.5 py-1 text-xs font-medium"
-            style={{ background: "var(--danger-soft)", color: "var(--danger)" }}
+            style={{ background: "var(--warning-soft)", color: "var(--warning-text)" }}
           >
             {t("dashboard.overdue")}
           </span>
@@ -123,7 +123,7 @@ export function CompletionOverlay({
     >
       <div
         className="flex h-20 w-20 items-center justify-center rounded-full text-4xl"
-        style={{ background: "var(--accent-soft)" }}
+        style={{ background: "var(--success-soft)" }}
       >
         {enrollmentFinished ? "🎉" : "✓"}
       </div>

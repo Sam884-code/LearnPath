@@ -4,6 +4,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { getMe, logout } from "@/lib/api-client";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 // Desktop-first shell for the teacher area: a top nav plus a role guard. Plainer
 // than the student UI by design — teachers work on laptops.
@@ -77,9 +78,12 @@ export function TeacherShell({ children }: { children: ReactNode }) {
               );
             })}
           </nav>
-          <button onClick={onLogout} className="text-sm" style={{ color: "var(--text-muted)" }}>
-            {t("teacher.logout")}
-          </button>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <button onClick={onLogout} className="text-sm" style={{ color: "var(--text-muted)" }}>
+              {t("teacher.logout")}
+            </button>
+          </div>
         </div>
       </header>
 

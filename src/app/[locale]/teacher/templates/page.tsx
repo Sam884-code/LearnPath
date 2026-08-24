@@ -13,6 +13,12 @@ import {
 import { errorMessage } from "@/lib/errorMessages";
 import { TeacherShell } from "@/components/teacher/TeacherShell";
 import { ErrorBanner } from "@/components/ui";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function TeacherTemplatesPage() {
   const t = useTranslations();
@@ -40,16 +46,8 @@ export default function TeacherTemplatesPage() {
   return (
     <TeacherShell>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-bold" style={{ color: "var(--text)" }}>
-          {t("teacher.templatesTitle")}
-        </h1>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="rounded-lg px-4 py-2 text-sm font-semibold text-white"
-          style={{ background: "var(--accent)" }}
-        >
-          {t("teacher.newTemplate")}
-        </button>
+        <h1 className="text-xl font-bold text-foreground">{t("teacher.templatesTitle")}</h1>
+        <Button onClick={() => setShowForm((v) => !v)}>{t("teacher.newTemplate")}</Button>
       </div>
 
       {error && (
@@ -79,29 +77,19 @@ export default function TeacherTemplatesPage() {
         <ul className="flex flex-col gap-2">
           {templates.map((tpl) => (
             <li key={tpl.id}>
-              <Link
-                href={`/teacher/templates/${tpl.id}`}
-                className="flex items-center gap-4 rounded-lg border px-4 py-3"
-                style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-              >
-                <span className="flex-1">
-                  <span className="block text-sm font-semibold" style={{ color: "var(--text)" }}>
-                    {tpl.title}
+              <Link href={`/teacher/templates/${tpl.id}`} className="block">
+                <Card className="flex flex-row items-center gap-4 rounded-2xl px-4 py-3 transition-shadow hover:shadow-md">
+                  <span className="flex-1">
+                    <span className="block text-sm font-semibold text-foreground">{tpl.title}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {tpl.subject.title} · {t(tpl.track === "exam" ? "teacher.trackExam" : "teacher.trackDepth")} ·{" "}
+                      {t("teacher.stepsCount", { n: tpl.steps.length })}
+                    </span>
                   </span>
-                  <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    {tpl.subject.title} · {t(tpl.track === "exam" ? "teacher.trackExam" : "teacher.trackDepth")} ·{" "}
-                    {t("teacher.stepsCount", { n: tpl.steps.length })}
-                  </span>
-                </span>
-                <span
-                  className="rounded-full px-2.5 py-1 text-xs font-medium"
-                  style={{
-                    background: tpl.isPublished ? "var(--accent-soft)" : "var(--surface-muted)",
-                    color: tpl.isPublished ? "var(--accent-text)" : "var(--text-muted)",
-                  }}
-                >
-                  {tpl.isPublished ? t("teacher.published") : t("teacher.draft")}
-                </span>
+                  <Badge variant={tpl.isPublished ? "success" : "secondary"}>
+                    {tpl.isPublished ? t("teacher.published") : t("teacher.draft")}
+                  </Badge>
+                </Card>
               </Link>
             </li>
           ))}
@@ -144,21 +132,14 @@ function CreateTemplateForm({
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="mb-6 grid gap-3 rounded-lg border p-4 sm:grid-cols-2"
-      style={{ borderColor: "var(--border)", background: "var(--surface)" }}
-    >
-      <label className="text-sm">
-        <span className="mb-1 block" style={{ color: "var(--text-muted)" }}>
-          {t("teacher.subject")}
-        </span>
+    <form onSubmit={onSubmit} className="mb-6 grid gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-2">
+      <div className="text-sm">
+        <Label className="mb-1 text-muted-foreground">{t("teacher.subject")}</Label>
         <select
           value={subjectId}
           onChange={(e) => setSubjectId(e.target.value)}
           required
-          className="w-full rounded border px-3 py-2"
-          style={{ borderColor: "var(--border)" }}
+          className={SELECT_CLASS}
         >
           <option value="">—</option>
           {subjects.map((s) => (
@@ -167,56 +148,35 @@ function CreateTemplateForm({
             </option>
           ))}
         </select>
-      </label>
-      <label className="text-sm">
-        <span className="mb-1 block" style={{ color: "var(--text-muted)" }}>
-          {t("teacher.track")}
-        </span>
+      </div>
+      <div className="text-sm">
+        <Label className="mb-1 text-muted-foreground">{t("teacher.track")}</Label>
         <select
           value={track}
           onChange={(e) => setTrack(e.target.value as "exam" | "depth")}
-          className="w-full rounded border px-3 py-2"
-          style={{ borderColor: "var(--border)" }}
+          className={SELECT_CLASS}
         >
           <option value="exam">{t("teacher.trackExam")}</option>
           <option value="depth">{t("teacher.trackDepth")}</option>
         </select>
-      </label>
-      <label className="text-sm sm:col-span-2">
-        <span className="mb-1 block" style={{ color: "var(--text-muted)" }}>
-          {t("teacher.templateTitle")}
-        </span>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-          className="w-full rounded border px-3 py-2"
-          style={{ borderColor: "var(--border)" }}
-        />
-      </label>
-      <label className="text-sm sm:col-span-2">
-        <span className="mb-1 block" style={{ color: "var(--text-muted)" }}>
-          {t("teacher.templateDescription")}
-        </span>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          required
-          rows={2}
-          className="w-full rounded border px-3 py-2"
-          style={{ borderColor: "var(--border)" }}
-        />
-      </label>
+      </div>
+      <div className="text-sm sm:col-span-2">
+        <Label className="mb-1 text-muted-foreground">{t("teacher.templateTitle")}</Label>
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+      </div>
+      <div className="text-sm sm:col-span-2">
+        <Label className="mb-1 text-muted-foreground">{t("teacher.templateDescription")}</Label>
+        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required rows={2} />
+      </div>
       <div className="sm:col-span-2">
-        <button
-          type="submit"
-          disabled={submitting || !subjectId}
-          className="rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
-          style={{ background: "var(--accent)" }}
-        >
+        <Button type="submit" disabled={submitting || !subjectId}>
           {submitting ? t("teacher.saving") : t("teacher.createTemplate")}
-        </button>
+        </Button>
       </div>
     </form>
   );
 }
+
+// Native <select> styled to match shadcn Input (shadcn has no Select installed).
+const SELECT_CLASS =
+  "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50";
