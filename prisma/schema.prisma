@@ -43,19 +43,22 @@ enum UserStepStatus {
 }
 
 model User {
-  id                String            @id @default(uuid()) @db.Uuid
-  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
-  name              String
-  email             String            @unique @db.Citext
-  passwordHash      String            @map("password_hash")
-  role              Role              @default(student)
-  locale            Locale            @default(hy)
-  authoredTemplates RoadmapTemplate[] @relation("TemplateAuthor")
-  uploadedMaterials StepMaterial[]    @relation("MaterialUploader")
-  gradedSubmissions Submission[]      @relation("SubmissionGrader")
-  answeredQuestions MentorQuestion[]  @relation("QuestionAnswerer")
-  enrollments       Enrollment[]
+  id                   String                @id @default(uuid()) @db.Uuid
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  name                 String
+  email                String                @unique @db.Citext
+  passwordHash         String                @map("password_hash")
+  role                 Role                  @default(student)
+  locale               Locale                @default(hy)
+  authoredTemplates    RoadmapTemplate[]     @relation("TemplateAuthor")
+  uploadedMaterials    StepMaterial[]        @relation("MaterialUploader")
+  gradedSubmissions    Submission[]          @relation("SubmissionGrader")
+  answeredQuestions    MentorQuestion[]      @relation("QuestionAnswerer")
+  enrollments          Enrollment[]
+  // Classroom: a teacher owns one classroom; a student joins many.
+  classroom            Classroom?            @relation("ClassroomTeacher")
+  classroomMemberships ClassroomMembership[] @relation("ClassroomStudent")
 
   @@map("users")
 }
@@ -246,4 +249,32 @@ model MentorQuestion {
 
   @@index([enrollmentId])
   @@map("mentor_questions")
+}
+
+// A teacher's classroom. Students join with the short `joinCode`, which links
+// them to this teacher so the teacher's grading queue is scoped to their class.
+model Classroom {
+  id          String                @id @default(uuid()) @db.Uuid
+  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  teacherId   String                @unique @map("teacher_id") @db.Uuid
+  name        String
+  joinCode    String                @unique @map("join_code")
+  teacher     User                  @relation("ClassroomTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  memberships ClassroomMembership[]
+
+  @@map("classrooms")
+}
+
+model ClassroomMembership {
+  id          String    @id @default(uuid()) @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  classroomId String    @map("classroom_id") @db.Uuid
+  studentId   String    @map("student_id") @db.Uuid
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  student     User      @relation("ClassroomStudent", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([classroomId, studentId])
+  @@index([studentId])
+  @@map("classroom_memberships")
 }

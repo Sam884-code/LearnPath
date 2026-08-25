@@ -17,6 +17,7 @@ import { ErrorBanner, Eyebrow, PrimaryButton, Screen, Skeleton } from "@/compone
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { JoinClassCard } from "@/components/classroom/JoinClassCard";
 
 const TYPE_ICON: Record<ApiRoadmapStep["type"], string> = {
   lesson: "📖",
@@ -87,6 +88,9 @@ export default function DashboardPage() {
               {t("dashboard.noEnrollmentAction")}
             </PrimaryButton>
           </div>
+          <div className="mt-4 w-full text-left">
+            <JoinClassCard />
+          </div>
         </div>
       </Screen>
     );
@@ -119,6 +123,9 @@ export default function DashboardPage() {
           ) : activeStep ? (
             <ActiveStepCard step={activeStep} t={t} />
           ) : null}
+          <div className="mt-4">
+            <JoinClassCard />
+          </div>
         </div>
 
         <div className="mt-8 md:mt-0">

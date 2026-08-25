@@ -248,7 +248,29 @@
     "showUnanswered": "Միայն անպատասխանները",
     "answerPlaceholder": "Գրիր պատասխանը...",
     "sendAnswer": "Ուղարկել պատասխանը",
-    "answered": "Պատասխանված է"
+    "answered": "Պատասխանված է",
+    "classroom": "Դասարան",
+    "classroomTitle": "Իմ դասարանը",
+    "classroomSubtitle": "Կիսվիր կոդով, որ աշակերտները միանան քո դասարանին։",
+    "joinCodeLabel": "Միանալու կոդ",
+    "joinCodeHint": "Աշակերտները մուտքագրում են այս կոդը՝ քո դասարանին միանալու համար։",
+    "copyCode": "Պատճենել",
+    "codeCopied": "Կոդը պատճենվեց",
+    "regenerateCode": "Նոր կոդ ստեղծել",
+    "regenerating": "Ստեղծվում է...",
+    "codeRegenerated": "Նոր կոդ ստեղծվեց",
+    "membersTitle": "Աշակերտներ",
+    "membersCount": "{n} աշակերտ",
+    "noMembers": "Դեռ ոչ ոք չի միացել այս դասարանին։"
+  },
+  "classroom": {
+    "joinTitle": "Միացիր դասարանին",
+    "joinSubtitle": "Մուտքագրիր ուսուցչիցդ ստացած կոդը։",
+    "joinPlaceholder": "Կոդ (օր․՝ ABC123)",
+    "joinButton": "Միանալ",
+    "joining": "Միանում է...",
+    "joinedToast": "Միացար {teacher}-ի դասարանին",
+    "inClass": "Դու {teacher}-ի դասարանում ես"
   },
   "errors": {
     "INVALID_CREDENTIALS": "Էլ. հասցեն կամ գաղտնաբառը սխալ է",
@@ -262,6 +284,7 @@
     "NO_ATTEMPTS_LEFT": "Փորձերն սպառված են",
     "NO_TEMPLATE_AVAILABLE": "Այս առարկայի համար դեռ ուղի պատրաստ չէ",
     "ALREADY_ENROLLED": "Դու արդեն սկսել ես այս առարկան",
+    "CLASSROOM_NOT_FOUND": "Այդ կոդով դասարան չգտնվեց։ Ստուգիր կոդը։",
     "FILE_TOO_LARGE": "Ֆայլը չափազանց մեծ է",
     "UNSUPPORTED_FILE_TYPE": "Ֆայլի այս տեսակը թույլատրված չէ",
     "VALIDATION_ERROR": "Տվյալները սխալ են լրացված",

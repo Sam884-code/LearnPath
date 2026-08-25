@@ -100,8 +100,19 @@ async function createSubmissionFixture(opts: { passScore: number; secondStep?: b
     },
   });
 
+  // Link the student to the template author's classroom so the grading queue
+  // (scoped by classroom) includes this submission for `teacher`.
+  await prisma.classroom.create({
+    data: {
+      teacherId: teacher.id,
+      name: "Class",
+      joinCode: randomUUID().slice(0, 8).toUpperCase(),
+      memberships: { create: { studentId: student.id } },
+    },
+  });
+
   const grader = await createUser("teacher");
-  return { grader, enrollment, userStep, nextUserStep, submission };
+  return { teacher, grader, enrollment, userStep, nextUserStep, submission };
 }
 
 describe("gradeSubmission", () => {
@@ -187,14 +198,26 @@ describe("gradeSubmission", () => {
 
 describe("listPendingSubmissions", () => {
   test("only includes ungraded submissions", async () => {
-    const { submission } = await createSubmissionFixture({ passScore: 70 });
+    const { teacher, submission } = await createSubmissionFixture({ passScore: 70 });
     const { grader, submission: graded } = await createSubmissionFixture({ passScore: 70 });
     await gradeSubmission(prisma, grader.id, graded.id, 90, null);
 
-    const pending = await listPendingSubmissions(prisma);
+    const pending = await listPendingSubmissions(prisma, teacher.id);
     const ids = pending.map((s) => s.id);
 
     expect(ids).toContain(submission.id);
     expect(ids).not.toContain(graded.id);
+  });
+
+  test("excludes submissions from students not in the teacher's classroom", async () => {
+    const mine = await createSubmissionFixture({ passScore: 70 });
+    const other = await createSubmissionFixture({ passScore: 70 });
+
+    // The classroom owner only sees their own class's submissions.
+    const pending = await listPendingSubmissions(prisma, mine.teacher.id);
+    const ids = pending.map((s) => s.id);
+
+    expect(ids).toContain(mine.submission.id);
+    expect(ids).not.toContain(other.submission.id);
   });
 });

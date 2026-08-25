@@ -502,3 +502,41 @@ export function teacherAnswerQuestion(id: string, answer: string) {
     body: JSON.stringify({ answer }),
   });
 }
+
+// ---- Classroom (link students to a teacher) ----
+
+export type ApiClassroomMember = { id: string; name: string; email: string; joined_at: string };
+export type ApiClassroom = { id: string; name: string; join_code: string; members: ApiClassroomMember[] };
+export type ApiStudentClassroom = {
+  id: string;
+  name: string;
+  teacher: { id: string; name: string };
+  joined_at: string;
+};
+
+// Teacher: fetch (lazily create) their class + join code + members.
+export function teacherGetClassroom() {
+  return apiFetch<{ classroom: ApiClassroom }>("/teacher/classroom");
+}
+
+// Teacher: rotate the join code.
+export function teacherRegenerateJoinCode() {
+  return apiFetch<{ classroom: ApiClassroom }>("/teacher/classroom/regenerate", { method: "POST" });
+}
+
+// Student: join a class by code.
+export function joinClassroom(code: string) {
+  return apiFetch<{ classroom: { id: string; name: string }; teacher: { id: string; name: string } }>(
+    "/classroom/join",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    }
+  );
+}
+
+// Student: the classes they've joined.
+export function getMyClassrooms() {
+  return apiFetch<{ classrooms: ApiStudentClassroom[] }>("/classroom/mine");
+}

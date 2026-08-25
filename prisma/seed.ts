@@ -32,7 +32,22 @@ async function seedUsers() {
     )
   );
 
-  return { teacher, students };
+  // Classroom linking the seed students to the teacher, with a fixed, readable
+  // join code for predictable local testing.
+  const classroom = await prisma.classroom.upsert({
+    where: { teacherId: teacher.id },
+    update: {},
+    create: { teacherId: teacher.id, name: teacher.name, joinCode: "MATH01" },
+  });
+  for (const student of students) {
+    await prisma.classroomMembership.upsert({
+      where: { classroomId_studentId: { classroomId: classroom.id, studentId: student.id } },
+      update: {},
+      create: { classroomId: classroom.id, studentId: student.id },
+    });
+  }
+
+  return { teacher, students, classroom };
 }
 
 async function seedSubjects() {

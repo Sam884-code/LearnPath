@@ -2,11 +2,22 @@ import { PrismaClient } from "@prisma/client";
 import { ApiError } from "@/lib/errors";
 import { advanceStep } from "./advanceStep";
 
-// SPEC.md §5.8: GET /teacher/submissions?status=pending.
+// SPEC.md §5.8 / §13: GET /teacher/submissions?status=pending.
 // "pending" (grade IS NULL) is the only status value the spec documents.
-export async function listPendingSubmissions(prisma: PrismaClient) {
+// Scoped to the grading teacher's classroom: only submissions from students who
+// have joined this teacher's class are returned.
+export async function listPendingSubmissions(prisma: PrismaClient, teacherId: string) {
   const submissions = await prisma.submission.findMany({
-    where: { grade: null },
+    where: {
+      grade: null,
+      userStep: {
+        enrollment: {
+          user: {
+            classroomMemberships: { some: { classroom: { teacherId } } },
+          },
+        },
+      },
+    },
     include: {
       userStep: { include: { enrollment: { include: { user: true } }, templateStep: true } },
     },

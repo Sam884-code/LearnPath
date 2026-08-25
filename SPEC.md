@@ -593,3 +593,27 @@ serif numeral + blue eyebrow label + title + description. The active step is the
 blue hero card (blue glow + primary CTA); completed = emerald check; overdue =
 amber badge; locked = dimmed, non-interactive, lock icon. Reusable primitives:
 `Eyebrow`, `StepNumber` (`src/components/ui.tsx`).
+---
+
+## 13. Classroom (student ↔ teacher link)
+
+A lightweight classroom links students to a specific teacher so the teacher's
+grading queue is scoped to their own students.
+
+- **Model.** `Classroom` (one per teacher — `teacher_id` unique — with a unique
+  short `join_code`) and `ClassroomMembership` (`classroom_id` + `student_id`,
+  unique together). A student may join more than one class.
+- **Join code.** 6 chars from an unambiguous alphabet (no `0/O`, `1/I`). Created
+  lazily on first request; the teacher can rotate it (existing members stay).
+- **Endpoints.**
+  - `GET /teacher/classroom` → the teacher's class, join code, members (creates
+    it on first call).
+  - `POST /teacher/classroom/regenerate` → rotate the join code.
+  - `POST /classroom/join { code }` → student joins (idempotent; `CLASSROOM_NOT_FOUND`
+    for a bad code).
+  - `GET /classroom/mine` → the classes a student has joined.
+- **Grading scope.** `GET /teacher/submissions` (§5.8) returns **only** ungraded
+  submissions from students in the requesting teacher's classroom
+  (`listPendingSubmissions(prisma, teacherId)`).
+- **Screens.** Teacher: `/teacher/classroom` (join code + copy/regenerate +
+  member list). Student: a "join a class" card on the dashboard.

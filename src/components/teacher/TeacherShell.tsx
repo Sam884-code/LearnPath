@@ -35,6 +35,7 @@ export function TeacherShell({ children }: { children: ReactNode }) {
 
   const nav = [
     { href: "/teacher/templates", label: t("teacher.templates") },
+    { href: "/teacher/classroom", label: t("teacher.classroom") },
     { href: "/teacher/grading", label: t("teacher.grading") },
     { href: "/teacher/stuck", label: t("teacher.stuck") },
     { href: "/teacher/questions", label: t("teacher.questions") },
