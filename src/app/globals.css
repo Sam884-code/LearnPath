@@ -13,6 +13,13 @@
   red for errors — retuned to sit on the lighter surfaces. These custom
   variables are the app's source of truth (read via inline styles); shadcn/ui
   tokens are mapped onto them in @theme inline below.
+
+  Color balance follows the 60/30/10 rule:
+    60% dominant  — white / near-white (--surface, --bg): page & card backgrounds
+    30% secondary — neutral gray (--surface-muted, --border, --text-muted):
+                    section bands, hairlines, muted text
+    10% accent    — blue (--accent): CTAs, the active step, links, progress.
+                    Reserve blue as a pop; don't let it fill large areas.
 */
 :root {
   /* neutrals — pure gray */

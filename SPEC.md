@@ -561,6 +561,18 @@ Status colors are semantic and retuned to sit on the lighter surfaces.
 Dark mode re-values the same tokens to a neutral-gray dark (`--bg #0a0a0a`,
 `--surface #171717`, brighter blue `#3b82f6`).
 
+**60/30/10 balance** — color is distributed by the classic rule:
+
+| Share | Role | Tokens |
+|---|---|---|
+| **60%** dominant | white / near-white — page & card backgrounds | `--surface`, `--bg` |
+| **30%** secondary | neutral gray — section bands, hairlines, muted text | `--surface-muted`, `--border`, `--text-muted` |
+| **10%** accent | blue — CTAs, active step, links, progress | `--accent` |
+
+Blue is a **pop**, never a large fill: primary actions, the single active step,
+links, and progress. Large surfaces are white (60%); gray (30%) separates and
+groups (alternating section bands, cards-on-muted, borders, secondary text).
+
 ### 12.2 Typography
 
 **Serif display headings + hyperlegible sans body** — the LearnKata editorial
