@@ -542,36 +542,38 @@ renders on a single set of CSS custom properties defined in `src/app/globals.css
 
 ### 12.1 Color
 
-Neutrals are **pure gray** (0% saturation), not cool-slate. Brand is **blue**.
-Status colors are semantic and retuned to sit on the lighter surfaces.
+Brand is a **crimson → pink** range (`#880d1e · #dd2d4a · #f26a8d · #f49cbb`)
+with a **pale-cyan** (`#cbeef3` family) secondary — a warm-accent / cool-secondary
+complementary balance on a white base. Status colors stay semantic.
 
 | Token | Light | Role |
 |---|---|---|
-| `--bg` | `#fcfcfc` | app background |
+| `--bg` | `#fbfdfe` | app background |
 | `--surface` | `#ffffff` | cards / panels |
-| `--surface-muted` | `#f5f5f5` | tinted sections, chips |
-| `--border` | `#e5e5e5` | hairlines |
-| `--text` / `--text-muted` | `#0a0a0a` / `#737373` | body text |
-| `--accent` / `--accent-hover` | `#2563eb` / `#1d4ed8` | brand blue, **active step**, primary CTA |
-| `--accent-soft` / `--accent-text` | `#eff6ff` / `#1d4ed8` | soft blue chips, eyebrow labels |
+| `--surface-muted` | `#e8f5f8` | pale-cyan sections, chips (30% secondary) |
+| `--border` | `#d6e9ee` | cyan-tinted hairlines |
+| `--text` / `--text-muted` | `#1a1416` / `#6b7783` | body text |
+| `--accent` / `--accent-hover` | `#dd2d4a` / `#b31834` | brand crimson, **active step**, primary CTA |
+| `--accent-soft` / `--accent-text` | `#fde3e9` / `#880d1e` | soft-pink chips, eyebrow labels |
 | `--success*` | emerald `#059669` | **completed** steps |
 | `--warning*` | amber `#d97706` | **overdue** alerts |
 | `--danger*` | red `#dc2626` | errors / failures |
 
-Dark mode re-values the same tokens to a neutral-gray dark (`--bg #0a0a0a`,
-`--surface #171717`, brighter blue `#3b82f6`).
+Dark mode re-values the same tokens to a warm-dark theme (`--bg #140b0e`,
+`--surface #1e1317`) with the lighter pinks (`#f26a8d` / `#f49cbb`) as the accent.
 
 **60/30/10 balance** — color is distributed by the classic rule:
 
 | Share | Role | Tokens |
 |---|---|---|
 | **60%** dominant | white / near-white — page & card backgrounds | `--surface`, `--bg` |
-| **30%** secondary | neutral gray — section bands, hairlines, muted text | `--surface-muted`, `--border`, `--text-muted` |
-| **10%** accent | blue — CTAs, active step, links, progress | `--accent` |
+| **30%** secondary | pale cyan — section bands, hairlines, muted text | `--surface-muted`, `--border`, `--text-muted` |
+| **10%** accent | crimson/pink — CTAs, active step, links, progress | `--accent` |
 
-Blue is a **pop**, never a large fill: primary actions, the single active step,
-links, and progress. Large surfaces are white (60%); gray (30%) separates and
-groups (alternating section bands, cards-on-muted, borders, secondary text).
+The crimson accent is a **pop**, never a large fill: primary actions, the single
+active step, links, and progress. Large surfaces are white (60%); pale cyan (30%)
+separates and groups (alternating section bands, cards-on-muted, borders,
+secondary text).
 
 ### 12.2 Typography
 

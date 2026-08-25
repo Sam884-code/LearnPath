@@ -8,33 +8,32 @@
 
 /*
   LearnKata-inspired design system (see SPEC.md §12).
-  Brand: blue (#2563eb). Neutrals: pure gray (0% saturation) — near-white
-  surfaces, not cool-slate. Status: emerald for completed, amber for overdue,
-  red for errors — retuned to sit on the lighter surfaces. These custom
-  variables are the app's source of truth (read via inline styles); shadcn/ui
-  tokens are mapped onto them in @theme inline below.
+  Brand: crimson → pink (#dd2d4a / #880d1e), with a pale-cyan (#cbeef3 family)
+  secondary. Status: emerald for completed, amber for overdue, red for errors.
+  These custom variables are the app's source of truth (read via inline styles);
+  shadcn/ui tokens are mapped onto them in @theme inline below.
 
   Color balance follows the 60/30/10 rule:
     60% dominant  — white / near-white (--surface, --bg): page & card backgrounds
-    30% secondary — neutral gray (--surface-muted, --border, --text-muted):
+    30% secondary — pale cyan (--surface-muted, --border, --text-muted):
                     section bands, hairlines, muted text
-    10% accent    — blue (--accent): CTAs, the active step, links, progress.
-                    Reserve blue as a pop; don't let it fill large areas.
+    10% accent    — crimson/pink (--accent): CTAs, the active step, links,
+                    progress. Reserve it as a pop; don't let it fill large areas.
 */
 :root {
-  /* neutrals — pure gray */
-  --bg: #fcfcfc;
+  /* neutrals — 60% white base, 30% pale-cyan secondary (CBEEF3 family) */
+  --bg: #fbfdfe;
   --surface: #ffffff;
-  --surface-muted: #f5f5f5;
-  --border: #e5e5e5;
-  --text: #0a0a0a;
-  --text-muted: #737373;
+  --surface-muted: #e8f5f8;
+  --border: #d6e9ee;
+  --text: #1a1416;
+  --text-muted: #6b7783;
 
-  /* brand — blue */
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-soft: #eff6ff;
-  --accent-text: #1d4ed8;
+  /* brand — crimson → pink (10% accent) */
+  --accent: #dd2d4a;
+  --accent-hover: #b31834;
+  --accent-soft: #fde3e9;
+  --accent-text: #880d1e;
 
   /* status — emerald (completed) */
   --success: #059669;
@@ -55,8 +54,8 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  --shadow-primary: 0 4px 12px -2px rgba(37, 99, 235, 0.28);
-  --shadow-glow: 0 0 30px -10px rgba(37, 99, 235, 0.5);
+  --shadow-primary: 0 4px 12px -2px rgba(221, 45, 74, 0.3);
+  --shadow-glow: 0 0 30px -10px rgba(221, 45, 74, 0.5);
 
   --skeleton-shine: rgba(255, 255, 255, 0.6);
   --radius: 0.5rem;
@@ -65,17 +64,18 @@
 /* Dark theme: the same variables re-valued, so the whole UI (which reads these
    vars) responds to the theme toggle without per-component changes. */
 .dark {
-  --bg: #0a0a0a;
-  --surface: #171717;
-  --surface-muted: #262626;
-  --border: #2e2e2e;
-  --text: #fafafa;
-  --text-muted: #a3a3a3;
+  --bg: #140b0e;
+  --surface: #1e1317;
+  --surface-muted: #2a1b20;
+  --border: #3a2830;
+  --text: #f7ecef;
+  --text-muted: #c0a6ad;
 
-  --accent: #3b82f6;
-  --accent-hover: #60a5fa;
-  --accent-soft: #172554;
-  --accent-text: #93c5fd;
+  /* dark accent uses the lighter pinks (F26A8D / F49CBB) for contrast */
+  --accent: #f26a8d;
+  --accent-hover: #f49cbb;
+  --accent-soft: #3a1420;
+  --accent-text: #f9b7c8;
 
   --success: #10b981;
   --success-hover: #34d399;
@@ -92,8 +92,8 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
-  --shadow-primary: 0 4px 12px -2px rgba(59, 130, 246, 0.35);
-  --shadow-glow: 0 0 30px -10px rgba(59, 130, 246, 0.6);
+  --shadow-primary: 0 4px 12px -2px rgba(242, 106, 141, 0.35);
+  --shadow-glow: 0 0 30px -10px rgba(242, 106, 141, 0.6);
 
   --skeleton-shine: rgba(255, 255, 255, 0.05);
 }
