@@ -37,7 +37,7 @@ export function StepHeader({
       </Link>
 
       <div className="mt-4 flex items-center justify-between">
-        <span className="text-xs font-medium uppercase tracking-wide" style={{ color: "var(--text-muted)" }}>
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--accent-text)" }}>
           {TYPE_ICON[type]} {t("step.stepLabel", { n: orderIndex })} · {t(`stepType.${type}`)}
         </span>
         {overdue && (
@@ -50,7 +50,7 @@ export function StepHeader({
         )}
       </div>
 
-      <h1 className="mt-1 text-2xl font-bold leading-snug" style={{ color: "var(--text)" }}>
+      <h1 className="mt-2 text-3xl font-semibold leading-snug" style={{ color: "var(--text)" }}>
         {title}
       </h1>
     </header>
@@ -77,7 +77,7 @@ export function MaterialsList({ t, materials }: { t: T; materials: ApiMaterial[]
               href={m.download_url}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-3 rounded-xl border px-4 py-3"
+              className="flex items-center gap-3 rounded-xl border px-4 py-3 shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]"
               style={{ borderColor: "var(--border)", background: "var(--surface)" }}
             >
               <span className="text-lg" aria-hidden>
@@ -137,7 +137,7 @@ export function CompletionOverlay({
       )}
       <button
         onClick={() => router.push("/dashboard")}
-        className="mt-8 rounded-2xl px-6 py-3 text-base font-semibold text-white"
+        className="mt-8 rounded-lg px-6 py-3 text-base font-semibold text-white shadow-[var(--shadow-primary)]"
         style={{ background: "var(--accent)" }}
       >
         {t("completion.toDashboard")}

@@ -226,7 +226,7 @@ export default function OnboardingPage() {
 function Question({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col">
-      <h1 className="mb-6 text-xl font-bold leading-snug" style={{ color: "var(--text)" }}>
+      <h1 className="mb-6 text-2xl font-semibold leading-snug" style={{ color: "var(--text)" }}>
         {title}
       </h1>
       <div className="flex flex-col gap-3">{children}</div>

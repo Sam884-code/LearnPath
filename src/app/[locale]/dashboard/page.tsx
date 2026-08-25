@@ -242,7 +242,7 @@ function RoadmapItem({ step, t }: { step: ApiRoadmapStep; t: T }) {
 
   const inner = (
     <Card
-      className="flex flex-row items-center gap-3 rounded-2xl border px-4 py-3.5 shadow-[var(--shadow-sm)]"
+      className="flex flex-row items-center gap-4 rounded-2xl border px-4 py-4 shadow-[var(--shadow-sm)]"
       style={{
         borderColor: isActive ? "var(--accent)" : "var(--border)",
         background: isLocked ? "var(--surface-muted)" : "var(--surface)",
@@ -250,21 +250,24 @@ function RoadmapItem({ step, t }: { step: ApiRoadmapStep; t: T }) {
         boxShadow: isActive ? "0 8px 24px -12px color-mix(in oklab, var(--accent) 50%, transparent)" : undefined,
       }}
     >
+      {/* Numbered-path numeral, colored by state: blue active, emerald done. */}
       <span
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-serif text-base font-semibold tabular-nums"
         style={{
-          background: isDone ? "var(--success)" : "var(--surface-muted)",
-          color: isDone ? "#fff" : "var(--text-muted)",
+          background: isDone ? "var(--success)" : isActive ? "var(--accent)" : "var(--surface-muted)",
+          color: isDone || isActive ? "#fff" : "var(--text-muted)",
         }}
       >
         {isDone ? <Check className="h-4 w-4" strokeWidth={3} aria-hidden /> : step.order_index}
       </span>
 
-      <span className="text-xl leading-none" aria-hidden>
-        {TYPE_ICON[step.type]}
-      </span>
-
       <span className="min-w-0 flex-1">
+        <span
+          className="block text-[11px] font-semibold uppercase tracking-wider"
+          style={{ color: isActive ? "var(--accent-text)" : "var(--text-muted)" }}
+        >
+          {t(`stepType.${step.type}`)}
+        </span>
         <span className="block truncate text-sm font-medium text-foreground">{step.title}</span>
         {isDone && step.type === "quiz" && step.score !== null && (
           <span className="text-xs text-muted-foreground">{t("dashboard.scoreLabel", { score: step.score })}</span>
