@@ -383,7 +383,8 @@ POST /teacher/questions/:id/answer  {answer}
 ### Student
 | Screen | Contents |
 |---|---|
-| **Register / Login** | Name, email, password. Armenian labels. |
+| **Landing** | Logged-out marketing page (LearnKata-style): sticky blur header, serif hero + blue CTAs, numbered 5-step learning-path explainer, feature cards, footer. Logged-in visitors are routed onward. |
+| **Register / Login** | Name, email, password, role picker (student/teacher), password reveal. Desktop split-panel / mobile single column. Armenian labels. |
 | **Onboarding 1–4** | One question per screen, progress dots, back button. Q1 = subject cards. Q2 = two large choice cards. Q3 = three options. Q4 = yes/no. |
 | **Dashboard** | Progress bar (`percent`), active step card (big, primary CTA), vertical roadmap list below. |
 | **Roadmap list item** | Number, title, type icon, status pill: `locked` (grey, lock icon), `active` (green, glowing), `done` (checkmark). Locked items are non-tappable and visually muted. |
@@ -408,7 +409,8 @@ POST /teacher/questions/:id/answer  {answer}
 
 | Layer | Choice | Why |
 |---|---|---|
-| Front-end | Next.js (App Router) + TypeScript + Tailwind | one repo, SSR, easy deploy |
+| Front-end | Next.js (App Router) + TypeScript + Tailwind v4 (CSS-based config, no `tailwind.config.js`) + shadcn/ui + framer-motion | one repo, SSR, easy deploy; design system in `globals.css` (§12) |
+| Fonts | Noto Serif Armenian (headings) + Noto Sans Armenian / Inter (body), self-hosted via `next/font` | serif+sans pairing, Armenian-capable, no runtime fetch |
 | Back-end | Next.js route handlers (or separate Express if preferred) | fewer moving parts for MVP |
 | DB | PostgreSQL + Prisma | partial unique index support needed for the one-active-step rule |
 | Auth | JWT in httpOnly cookie, bcrypt | no third-party dependency |
@@ -528,3 +530,65 @@ requirements for the R2 driver:
 - **Config** is validated on boot: when `STORAGE_DRIVER=r2`, the four `R2_*`
   variables are required (§7 env validation), so a misconfigured deploy fails
   fast rather than at first upload.
+
+---
+
+## 12. LearnKata-inspired Design System
+
+The UI/UX overhaul to a premium, [LearnKata](https://learnkata.ai/)-style aesthetic
+is **in scope** for the product. The whole app (student + teacher, light + dark)
+renders on a single set of CSS custom properties defined in `src/app/globals.css`
+(there is no `tailwind.config.js` — Tailwind v4 keeps its theme in CSS `@theme inline`).
+
+### 12.1 Color
+
+Neutrals are **pure gray** (0% saturation), not cool-slate. Brand is **blue**.
+Status colors are semantic and retuned to sit on the lighter surfaces.
+
+| Token | Light | Role |
+|---|---|---|
+| `--bg` | `#fcfcfc` | app background |
+| `--surface` | `#ffffff` | cards / panels |
+| `--surface-muted` | `#f5f5f5` | tinted sections, chips |
+| `--border` | `#e5e5e5` | hairlines |
+| `--text` / `--text-muted` | `#0a0a0a` / `#737373` | body text |
+| `--accent` / `--accent-hover` | `#2563eb` / `#1d4ed8` | brand blue, **active step**, primary CTA |
+| `--accent-soft` / `--accent-text` | `#eff6ff` / `#1d4ed8` | soft blue chips, eyebrow labels |
+| `--success*` | emerald `#059669` | **completed** steps |
+| `--warning*` | amber `#d97706` | **overdue** alerts |
+| `--danger*` | red `#dc2626` | errors / failures |
+
+Dark mode re-values the same tokens to a neutral-gray dark (`--bg #0a0a0a`,
+`--surface #171717`, brighter blue `#3b82f6`).
+
+### 12.2 Typography
+
+**Serif display headings + hyperlegible sans body** — the LearnKata editorial
+pairing, adapted to Armenian (Young Serif / Atkinson Hyperlegible have no Armenian
+glyphs):
+
+- **Headings** (`h1–h3`, hero, section titles): **Noto Serif Armenian** via
+  `--font-serif`, applied app-wide (override with the `font-sans` utility for
+  numeric/label chrome).
+- **Body**: **Noto Sans Armenian** (+ Inter for Latin/numerals) via `--font-sans`.
+- **Eyebrow labels**: uppercase, 12px, 600 weight, letter-spacing, blue-700 —
+  the `Eyebrow` primitive (`src/components/ui.tsx`), used as section/step kickers.
+
+### 12.3 Shape, shadow, motion
+
+- **Radius**: base `--radius` = `0.5rem`; buttons `rounded-lg` (8px); cards
+  `rounded-2xl` (16px); hero surfaces `rounded-3xl` (24px); badges are pills.
+- **Shadows**: soft, layered, low-opacity tokens `--shadow-sm/md/lg`, plus a
+  blue `--shadow-primary` and `--shadow-glow` for primary actions and the active
+  step's breathing `.active-glow`.
+- **Motion** (framer-motion): entrance fades/slides, staggered lists,
+  `whileHover` elevation, `whileInView` reveals on the landing page. All motion
+  respects `prefers-reduced-motion`.
+
+### 12.4 The numbered learning-path
+
+The roadmap is presented in LearnKata's **numbered step** language: a prominent
+serif numeral + blue eyebrow label + title + description. The active step is the
+blue hero card (blue glow + primary CTA); completed = emerald check; overdue =
+amber badge; locked = dimmed, non-interactive, lock icon. Reusable primitives:
+`Eyebrow`, `StepNumber` (`src/components/ui.tsx`).

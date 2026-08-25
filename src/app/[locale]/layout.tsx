@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Armenian } from "next/font/google";
+import { Inter, Noto_Sans_Armenian, Noto_Serif_Armenian } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
@@ -16,6 +16,14 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 const notoArmenian = Noto_Sans_Armenian({
   subsets: ["armenian"],
   variable: "--font-noto-armenian",
+  display: "swap",
+});
+// Serif display face for headings — the LearnKata-style editorial headline,
+// adapted to Armenian (Young Serif has no Armenian glyphs).
+const notoSerifArmenian = Noto_Serif_Armenian({
+  subsets: ["armenian"],
+  weight: ["500", "600", "700"],
+  variable: "--font-noto-serif-armenian",
   display: "swap",
 });
 
@@ -52,7 +60,11 @@ export default async function LocaleLayout({
   return (
     // suppressHydrationWarning: next-themes sets the theme class on <html>
     // before hydration, which would otherwise mismatch the server render.
-    <html lang={locale} className={`${inter.variable} ${notoArmenian.variable}`} suppressHydrationWarning>
+    <html
+      lang={locale}
+      className={`${inter.variable} ${notoArmenian.variable} ${notoSerifArmenian.variable}`}
+      suppressHydrationWarning
+    >
       <body className="min-h-screen">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <NextIntlClientProvider>

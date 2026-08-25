@@ -51,7 +51,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       >
         <div className="text-lg font-bold tracking-tight">{t("app.name")}</div>
         <div>
-          <p className="text-3xl font-bold leading-tight">{t("auth.welcomeTitle")}</p>
+          <p className="font-serif text-4xl font-semibold leading-tight">{t("auth.welcomeTitle")}</p>
           <p className="mt-3 max-w-sm text-base text-white/80">{t("auth.welcomeSubtitle")}</p>
         </div>
         <div className="text-sm text-white/50">© {t("app.name")}</div>
@@ -67,19 +67,50 @@ export function AuthLayout({ children }: { children: ReactNode }) {
 }
 
 // Full-width primary CTA, wrapping shadcn Button with a loading state.
+// Blue flat fill with a soft shadow that warms to a blue glow on hover.
 export function PrimaryButton({
   children,
   loading,
+  className,
   ...props
 }: ComponentProps<typeof Button> & { loading?: boolean }) {
   return (
     <Button
       {...props}
       disabled={props.disabled || loading}
-      className="h-auto w-full rounded-xl py-4 text-base font-semibold"
+      className={cn(
+        "h-auto w-full rounded-lg py-4 text-base font-semibold shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-primary)]",
+        className,
+      )}
     >
       {children}
     </Button>
+  );
+}
+
+// Small uppercase eyebrow label in the brand blue — the LearnKata section /
+// step kicker. Pairs above a serif heading.
+export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <span
+      className={cn("text-xs font-semibold uppercase tracking-wider", className)}
+      style={{ color: "var(--accent-text)" }}
+    >
+      {children}
+    </span>
+  );
+}
+
+// Big serif numeral for the numbered learning-path presentation.
+export function StepNumber({ n, className }: { n: number | string; className?: string }) {
+  return (
+    <span
+      className={cn("font-serif text-4xl font-semibold leading-none tabular-nums", className)}
+      style={{ color: "var(--accent)" }}
+      aria-hidden
+    >
+      {n}
+    </span>
   );
 }
 

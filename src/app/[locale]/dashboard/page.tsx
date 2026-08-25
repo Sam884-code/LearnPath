@@ -13,7 +13,7 @@ import {
   type ApiRoadmapStep,
 } from "@/lib/api-client";
 import { errorMessage } from "@/lib/errorMessages";
-import { ErrorBanner, PrimaryButton, Screen, Skeleton } from "@/components/ui";
+import { ErrorBanner, Eyebrow, PrimaryButton, Screen, Skeleton } from "@/components/ui";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -105,10 +105,8 @@ export default function DashboardPage() {
         transition={{ duration: 0.3 }}
         className="mb-5 pt-2"
       >
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {t("dashboard.title")}
-        </p>
-        <h1 className="text-2xl font-bold text-foreground">{roadmap.enrollment.subject.title}</h1>
+        <Eyebrow>{t("dashboard.title")}</Eyebrow>
+        <h1 className="mt-1 text-3xl font-semibold text-foreground">{roadmap.enrollment.subject.title}</h1>
       </motion.header>
 
       {/* On desktop: "what's next" on the left, the full path on the right.
@@ -124,7 +122,9 @@ export default function DashboardPage() {
         </div>
 
         <div className="mt-8 md:mt-0">
-          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">{t("dashboard.wholePath")}</h2>
+          <div className="mb-3">
+            <Eyebrow>{t("dashboard.wholePath")}</Eyebrow>
+          </div>
           <motion.ol
             className="flex flex-col gap-2"
             initial="hidden"
@@ -148,7 +148,7 @@ type T = ReturnType<typeof useTranslations>;
 function ProgressCard({ percent, done, total, t }: { percent: number; done: number; total: number; t: T }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}>
-      <Card className="rounded-2xl p-5">
+      <Card className="rounded-2xl p-5 shadow-[var(--shadow-md)]">
         <div className="mb-2 flex items-center justify-between text-sm">
           <span className="font-medium text-foreground">{t("dashboard.progressLabel")}</span>
           <span className="text-muted-foreground">
@@ -175,13 +175,11 @@ function ActiveStepCard({ step, t }: { step: ApiRoadmapStep; t: T }) {
     >
       <Link href={`/steps/${step.id}`} className="block">
         <Card
-          className="active-glow gap-0 overflow-hidden rounded-3xl border-2 p-6"
-          style={{ borderColor: "var(--success)" }}
+          className="active-glow gap-0 overflow-hidden rounded-3xl border-2 p-6 shadow-[var(--shadow-md)]"
+          style={{ borderColor: "var(--accent)" }}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--success-text)" }}>
-              {t("dashboard.activeStepLabel")}
-            </span>
+            <Eyebrow>{t("dashboard.activeStepLabel")}</Eyebrow>
             {step.overdue && <Badge variant="warning">{t("dashboard.overdue")}</Badge>}
           </div>
 
@@ -190,19 +188,19 @@ function ActiveStepCard({ step, t }: { step: ApiRoadmapStep; t: T }) {
               <motion.span
                 aria-hidden
                 className="absolute inset-0 rounded-full"
-                style={{ background: "var(--success-soft)" }}
+                style={{ background: "var(--accent-soft)" }}
                 animate={{ scale: [1, 1.35, 1], opacity: [0.6, 0, 0.6] }}
                 transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
               />
               <span className="relative text-3xl leading-none">{TYPE_ICON[step.type]}</span>
             </span>
             <div className="flex-1">
-              <p className="text-xs font-medium text-muted-foreground">{t(`stepType.${step.type}`)}</p>
-              <h2 className="text-lg font-bold leading-snug text-foreground">{step.title}</h2>
+              <p className="font-sans text-xs font-medium text-muted-foreground">{t(`stepType.${step.type}`)}</p>
+              <h2 className="text-xl font-semibold leading-snug text-foreground">{step.title}</h2>
             </div>
           </div>
 
-          <div className="mt-5 w-full rounded-xl bg-primary px-5 py-3.5 text-center text-base font-semibold text-primary-foreground">
+          <div className="mt-5 w-full rounded-lg bg-primary px-5 py-3.5 text-center text-base font-semibold text-primary-foreground shadow-[var(--shadow-primary)]">
             {t("dashboard.openStep")}
           </div>
         </Card>
@@ -244,12 +242,12 @@ function RoadmapItem({ step, t }: { step: ApiRoadmapStep; t: T }) {
 
   const inner = (
     <Card
-      className="flex flex-row items-center gap-3 rounded-2xl border px-4 py-3.5"
+      className="flex flex-row items-center gap-3 rounded-2xl border px-4 py-3.5 shadow-[var(--shadow-sm)]"
       style={{
-        borderColor: isActive ? "var(--success)" : "var(--border)",
+        borderColor: isActive ? "var(--accent)" : "var(--border)",
         background: isLocked ? "var(--surface-muted)" : "var(--surface)",
         opacity: isLocked ? 0.55 : 1,
-        boxShadow: isActive ? "0 8px 24px -12px color-mix(in oklab, var(--success) 50%, transparent)" : undefined,
+        boxShadow: isActive ? "0 8px 24px -12px color-mix(in oklab, var(--accent) 50%, transparent)" : undefined,
       }}
     >
       <span
@@ -305,7 +303,7 @@ function StatusPill({ step, t }: { step: ApiRoadmapStep; t: T }) {
         {t("dashboard.overdue")}
       </Badge>
     ) : (
-      <Badge variant="success" className="shrink-0">
+      <Badge variant="accent" className="shrink-0">
         {t("dashboard.statusActive")}
       </Badge>
     );

@@ -18,7 +18,9 @@ const badgeVariants = cva(
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 [a&]:hover:underline",
-        // App status variants (SPEC theme): emerald = active/completed, amber = overdue.
+        // App status variants (SPEC theme): blue = active, emerald = completed,
+        // amber = overdue.
+        accent: "bg-[var(--accent-soft)] text-[var(--accent-text)]",
         success: "bg-[var(--success-soft)] text-[var(--success-text)]",
         warning: "bg-[var(--warning-soft)] text-[var(--warning-text)]",
       },

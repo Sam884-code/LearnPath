@@ -7,60 +7,68 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  Modern educational-platform palette.
-  Brand: deep indigo. Status: emerald for active/completed, amber for overdue,
-  red for errors/failures. Clean cool-slate neutrals. These custom variables are
-  the app's source of truth (read via inline styles); shadcn/ui tokens are mapped
-  onto them in @theme inline below.
+  LearnKata-inspired design system (see SPEC.md §12).
+  Brand: blue (#2563eb). Neutrals: pure gray (0% saturation) — near-white
+  surfaces, not cool-slate. Status: emerald for completed, amber for overdue,
+  red for errors — retuned to sit on the lighter surfaces. These custom
+  variables are the app's source of truth (read via inline styles); shadcn/ui
+  tokens are mapped onto them in @theme inline below.
 */
 :root {
-  /* neutrals */
-  --bg: #f8fafc;
+  /* neutrals — pure gray */
+  --bg: #fcfcfc;
   --surface: #ffffff;
-  --surface-muted: #f1f5f9;
-  --border: #e2e8f0;
-  --text: #0f172a;
-  --text-muted: #64748b;
+  --surface-muted: #f5f5f5;
+  --border: #e5e5e5;
+  --text: #0a0a0a;
+  --text-muted: #737373;
 
-  /* brand — deep indigo */
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-soft: #e0e7ff;
-  --accent-text: #4338ca;
+  /* brand — blue */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-soft: #eff6ff;
+  --accent-text: #1d4ed8;
 
-  /* status — emerald (active / completed) */
+  /* status — emerald (completed) */
   --success: #059669;
   --success-hover: #047857;
-  --success-soft: #d1fae5;
+  --success-soft: #ecfdf5;
   --success-text: #047857;
 
   /* status — amber (overdue alerts) */
   --warning: #d97706;
-  --warning-soft: #fef3c7;
+  --warning-soft: #fffbeb;
   --warning-text: #b45309;
 
   /* status — red (errors / failed) */
   --danger: #dc2626;
-  --danger-soft: #fee2e2;
+  --danger-soft: #fef2f2;
+
+  /* soft, layered shadows (LearnKata) */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-primary: 0 4px 12px -2px rgba(37, 99, 235, 0.28);
+  --shadow-glow: 0 0 30px -10px rgba(37, 99, 235, 0.5);
 
   --skeleton-shine: rgba(255, 255, 255, 0.6);
-  --radius: 1rem;
+  --radius: 0.5rem;
 }
 
 /* Dark theme: the same variables re-valued, so the whole UI (which reads these
    vars) responds to the theme toggle without per-component changes. */
 .dark {
-  --bg: #0b1220;
-  --surface: #151e31;
-  --surface-muted: #1e293b;
-  --border: #2a3547;
-  --text: #e2e8f0;
-  --text-muted: #94a3b8;
+  --bg: #0a0a0a;
+  --surface: #171717;
+  --surface-muted: #262626;
+  --border: #2e2e2e;
+  --text: #fafafa;
+  --text-muted: #a3a3a3;
 
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-  --accent-soft: #1e1b4b;
-  --accent-text: #a5b4fc;
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-soft: #172554;
+  --accent-text: #93c5fd;
 
   --success: #10b981;
   --success-hover: #34d399;
@@ -74,6 +82,12 @@
   --danger: #f87171;
   --danger-soft: #3a1414;
 
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+  --shadow-primary: 0 4px 12px -2px rgba(59, 130, 246, 0.35);
+  --shadow-glow: 0 0 30px -10px rgba(59, 130, 246, 0.6);
+
   --skeleton-shine: rgba(255, 255, 255, 0.05);
 }
 
@@ -84,6 +98,8 @@
 @theme inline {
   --font-sans: var(--font-inter), var(--font-noto-armenian), "Segoe UI", system-ui, -apple-system,
     BlinkMacSystemFont, Arial, sans-serif;
+  /* Serif display face for headings (Armenian-capable). Enables `font-serif`. */
+  --font-serif: var(--font-noto-serif-armenian), "Young Serif", Georgia, "Times New Roman", serif;
 
   --color-background: var(--bg);
   --color-foreground: var(--text);
@@ -123,6 +139,16 @@ body {
     BlinkMacSystemFont, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* Serif display headings — the LearnKata editorial headline look, applied
+   app-wide. Override with the `font-sans` utility where a heading must stay
+   sans (e.g. numeric/label chrome). */
+h1,
+h2,
+h3 {
+  font-family: var(--font-serif);
+  letter-spacing: -0.01em;
 }
 
 /* Markdown lesson bodies (Tailwind's reset removes default element styles). */
@@ -185,10 +211,10 @@ body {
 @keyframes active-glow-pulse {
   0%,
   100% {
-    box-shadow: 0 12px 34px -16px color-mix(in oklab, var(--success) 45%, transparent);
+    box-shadow: 0 12px 34px -16px color-mix(in oklab, var(--accent) 45%, transparent);
   }
   50% {
-    box-shadow: 0 18px 46px -12px color-mix(in oklab, var(--success) 72%, transparent);
+    box-shadow: 0 18px 46px -12px color-mix(in oklab, var(--accent) 72%, transparent);
   }
 }
 .active-glow {
