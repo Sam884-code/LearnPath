@@ -2,39 +2,41 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
 import { getMe } from "@/lib/api-client";
 import { FullScreenLoader } from "@/components/ui";
 import { LandingPage } from "@/components/landing/LandingPage";
 
-// Entry point: logged-in users are routed to their app; logged-out visitors
-// see the marketing landing page.
+// Entry point: everyone lands on the marketing page first. Signed-in visitors
+// get a "go to app" CTA (pointed at the right place) instead of login/register,
+// so they can continue but always see the landing first.
+type Auth = { status: "checking" } | { status: "guest" } | { status: "member"; target: string };
+
 export default function Home() {
-  const router = useRouter();
   const t = useTranslations();
-  const [state, setState] = useState<"checking" | "guest">("checking");
+  const [auth, setAuth] = useState<Auth>({ status: "checking" });
 
   useEffect(() => {
     let cancelled = false;
     getMe()
       .then((me) => {
         if (cancelled) return;
+        let target = "/dashboard";
         if (me.user.role === "teacher") {
-          router.replace("/teacher");
-          return;
+          target = "/teacher";
+        } else {
+          const hasLiveEnrollment = me.enrollments.some((e) => e.completedAt === null);
+          target = hasLiveEnrollment ? "/dashboard" : "/onboarding";
         }
-        const hasLiveEnrollment = me.enrollments.some((e) => e.completedAt === null);
-        router.replace(hasLiveEnrollment ? "/dashboard" : "/onboarding");
+        setAuth({ status: "member", target });
       })
       .catch(() => {
-        // Not signed in → show the landing page rather than jumping to /login.
-        if (!cancelled) setState("guest");
+        if (!cancelled) setAuth({ status: "guest" });
       });
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, []);
 
-  if (state === "guest") return <LandingPage />;
-  return <FullScreenLoader label={t("common.loading")} />;
+  if (auth.status === "checking") return <FullScreenLoader label={t("common.loading")} />;
+  return <LandingPage memberTarget={auth.status === "member" ? auth.target : null} />;
 }

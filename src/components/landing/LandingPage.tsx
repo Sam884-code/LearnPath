@@ -11,9 +11,10 @@ import { ThemeToggle } from "@/components/theme-toggle";
 // Marketing landing shown to logged-out visitors — LearnKata-inspired:
 // serif headline, blue CTAs, a numbered learning-path explainer, feature
 // cards, soft shadows and generous whitespace.
-export function LandingPage() {
+export function LandingPage({ memberTarget = null }: { memberTarget?: string | null }) {
   const t = useTranslations("landing");
   const app = useTranslations("app");
+  const isMember = memberTarget !== null;
 
   const steps = [1, 2, 3, 4, 5].map((i) => ({
     n: i,
@@ -44,19 +45,31 @@ export function LandingPage() {
           <span className="text-lg font-bold tracking-tight text-foreground">{app("name")}</span>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Link
-              href="/login"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {t("navSignIn")}
-            </Link>
-            <Link
-              href="/register"
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-primary)]"
-              style={{ background: "var(--accent)" }}
-            >
-              {t("navStart")}
-            </Link>
+            {isMember ? (
+              <Link
+                href={memberTarget!}
+                className="rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-primary)]"
+                style={{ background: "var(--accent)" }}
+              >
+                {t("goToApp")}
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {t("navSignIn")}
+                </Link>
+                <Link
+                  href="/register"
+                  className="rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-primary)]"
+                  style={{ background: "var(--accent)" }}
+                >
+                  {t("navStart")}
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -93,18 +106,20 @@ export function LandingPage() {
             className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
           >
             <Link
-              href="/register"
+              href={isMember ? memberTarget! : "/register"}
               className="inline-flex items-center gap-2 rounded-lg px-6 py-3.5 text-base font-semibold text-white shadow-[var(--shadow-primary)] transition-transform hover:-translate-y-0.5"
               style={{ background: "var(--accent)" }}
             >
-              {t("heroCta")} <ArrowRight className="h-4 w-4" />
+              {isMember ? t("goToApp") : t("heroCta")} <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link
-              href="/login"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {t("heroSecondary")}
-            </Link>
+            {!isMember && (
+              <Link
+                href="/login"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {t("heroSecondary")}
+              </Link>
+            )}
           </motion.div>
         </div>
       </section>
@@ -181,11 +196,11 @@ export function LandingPage() {
           {t("finalTitle")}
         </h2>
         <Link
-          href="/register"
+          href={isMember ? memberTarget! : "/register"}
           className="mt-8 inline-flex items-center gap-2 rounded-lg px-7 py-3.5 text-base font-semibold text-white shadow-[var(--shadow-primary)] transition-transform hover:-translate-y-0.5"
           style={{ background: "var(--accent)" }}
         >
-          {t("finalCta")} <ArrowRight className="h-4 w-4" />
+          {isMember ? t("goToApp") : t("finalCta")} <ArrowRight className="h-4 w-4" />
         </Link>
       </section>
 
