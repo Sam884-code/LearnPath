@@ -26,7 +26,14 @@
     "haveAccountQuestion": "Արդեն ունե՞ս հաշիվ",
     "goToRegister": "Գրանցվիր",
     "goToLogin": "Մուտք գործիր",
-    "submitting": "Մի պահ..."
+    "submitting": "Մի պահ...",
+    "showPassword": "Ցույց տալ գաղտնաբառը",
+    "hidePassword": "Թաքցնել գաղտնաբառը",
+    "roleQuestion": "Ես եմ...",
+    "roleStudent": "Աշակերտ",
+    "roleStudentDesc": "Սովորում եմ իմ ուղով",
+    "roleTeacher": "Ուսուցիչ",
+    "roleTeacherDesc": "Ստեղծում եմ ուղիներ և գնահատում"
   },
   "onboarding": {
     "progress": "{current}-ը {total}-ից",

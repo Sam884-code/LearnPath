@@ -98,7 +98,7 @@ export default function DashboardPage() {
   const finished = roadmap.enrollment.completed_at !== null;
 
   return (
-    <Screen>
+    <Screen size="wide">
       <motion.header
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -111,27 +111,34 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-bold text-foreground">{roadmap.enrollment.subject.title}</h1>
       </motion.header>
 
-      <ProgressCard percent={progress.percent} done={progress.done} total={progress.total} t={t} />
+      {/* On desktop: "what's next" on the left, the full path on the right.
+          On mobile everything stacks in reading order. */}
+      <div className="md:grid md:grid-cols-2 md:items-start md:gap-8">
+        <div className="md:sticky md:top-8">
+          <ProgressCard percent={progress.percent} done={progress.done} total={progress.total} t={t} />
+          {finished ? (
+            <FinishedCard t={t} />
+          ) : activeStep ? (
+            <ActiveStepCard step={activeStep} t={t} />
+          ) : null}
+        </div>
 
-      {finished ? (
-        <FinishedCard t={t} />
-      ) : activeStep ? (
-        <ActiveStepCard step={activeStep} t={t} />
-      ) : null}
-
-      <h2 className="mb-3 mt-8 text-sm font-semibold text-muted-foreground">{t("dashboard.wholePath")}</h2>
-      <motion.ol
-        className="flex flex-col gap-2"
-        initial="hidden"
-        animate="show"
-        variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-      >
-        {roadmap.steps.map((s) => (
-          <motion.li key={s.id} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}>
-            <RoadmapItem step={s} t={t} />
-          </motion.li>
-        ))}
-      </motion.ol>
+        <div className="mt-8 md:mt-0">
+          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">{t("dashboard.wholePath")}</h2>
+          <motion.ol
+            className="flex flex-col gap-2"
+            initial="hidden"
+            animate="show"
+            variants={{ show: { transition: { staggerChildren: 0.05 } } }}
+          >
+            {roadmap.steps.map((s) => (
+              <motion.li key={s.id} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}>
+                <RoadmapItem step={s} t={t} />
+              </motion.li>
+            ))}
+          </motion.ol>
+        </div>
+      </div>
     </Screen>
   );
 }
@@ -314,7 +321,7 @@ function StatusPill({ step, t }: { step: ApiRoadmapStep; t: T }) {
 
 function DashboardSkeleton() {
   return (
-    <Screen>
+    <Screen size="wide">
       <div className="mb-5 pt-2">
         <Skeleton className="h-3 w-20" radius={6} />
         <div className="mt-2">

@@ -26,7 +26,14 @@
     "haveAccountQuestion": "Already have an account?",
     "goToRegister": "Sign up",
     "goToLogin": "Sign in",
-    "submitting": "One moment..."
+    "submitting": "One moment...",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "roleQuestion": "I am a...",
+    "roleStudent": "Student",
+    "roleStudentDesc": "Learning along my path",
+    "roleTeacher": "Teacher",
+    "roleTeacherDesc": "Create paths and grade work"
   },
   "onboarding": {
     "progress": "{current} of {total}",

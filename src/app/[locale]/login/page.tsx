@@ -5,8 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
 import { login, getMe } from "@/lib/api-client";
 import { errorMessage } from "@/lib/errorMessages";
-import { ErrorBanner, PrimaryButton, Screen, TextField } from "@/components/ui";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { AuthLayout, ErrorBanner, PrimaryButton, TextField } from "@/components/ui";
 
 export default function LoginPage() {
   const t = useTranslations();
@@ -37,21 +36,17 @@ export default function LoginPage() {
   }
 
   return (
-    <Screen>
-      <div className="flex justify-end">
-        <ThemeToggle />
-      </div>
-      <div className="flex flex-1 flex-col justify-center">
-        <header className="mb-8">
-          <h1 className="text-2xl font-bold" style={{ color: "var(--text)" }}>
-            {t("auth.loginTitle")}
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
-            {t("auth.welcomeSubtitle")}
-          </p>
-        </header>
+    <AuthLayout>
+      <header className="mb-8">
+        <h1 className="text-2xl font-bold" style={{ color: "var(--text)" }}>
+          {t("auth.loginTitle")}
+        </h1>
+        <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
+          {t("auth.welcomeSubtitle")}
+        </p>
+      </header>
 
-        <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <form onSubmit={onSubmit} className="flex flex-col gap-4">
           {error && <ErrorBanner message={error} />}
           <TextField
             label={t("auth.email")}
@@ -79,13 +74,12 @@ export default function LoginPage() {
           </div>
         </form>
 
-        <p className="mt-6 text-center text-sm" style={{ color: "var(--text-muted)" }}>
-          {t("auth.noAccountQuestion")}{" "}
-          <Link href="/register" className="font-semibold" style={{ color: "var(--accent-text)" }}>
-            {t("auth.goToRegister")}
-          </Link>
-        </p>
-      </div>
-    </Screen>
+      <p className="mt-6 text-center text-sm" style={{ color: "var(--text-muted)" }}>
+        {t("auth.noAccountQuestion")}{" "}
+        <Link href="/register" className="font-semibold" style={{ color: "var(--accent-text)" }}>
+          {t("auth.goToRegister")}
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

@@ -1,19 +1,67 @@
 "use client";
 
-import { ComponentProps, InputHTMLAttributes, ReactNode } from "react";
+import { ComponentProps, InputHTMLAttributes, ReactNode, useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 // Shared app primitives, now built on shadcn/ui underneath. Colors come from the
 // CSS variables in globals.css (mapped to shadcn tokens) so the palette stays in
 // one place and both light/dark themes work.
 
-export function Screen({ children }: { children: ReactNode }) {
+// Page container. Mobile-first single column that widens on desktop instead of
+// staying a narrow phone-width strip. `size` picks the desktop max-width:
+//   narrow  — forms / wizards (onboarding)
+//   reading — long-form step content
+//   wide    — the dashboard (uses the extra room for a two-column grid)
+export function Screen({
+  children,
+  size = "narrow",
+}: {
+  children: ReactNode;
+  size?: "narrow" | "reading" | "wide";
+}) {
+  const width =
+    size === "wide"
+      ? "max-w-md md:max-w-5xl"
+      : size === "reading"
+        ? "max-w-md md:max-w-2xl"
+        : "max-w-md sm:max-w-lg";
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col px-6 pb-10 pt-8">
+    <main className={cn("mx-auto flex min-h-screen w-full flex-col px-6 pb-10 pt-8 md:px-8", width)}>
       {children}
+    </main>
+  );
+}
+
+// Desktop-responsive shell for the auth screens: a branded panel beside the
+// form on large screens, a plain centered form on mobile.
+export function AuthLayout({ children }: { children: ReactNode }) {
+  const t = useTranslations();
+  return (
+    <main className="min-h-screen w-full md:grid md:grid-cols-2">
+      <aside
+        className="relative hidden flex-col justify-between p-12 text-white md:flex"
+        style={{ background: "linear-gradient(160deg, var(--accent), var(--accent-hover))" }}
+      >
+        <div className="text-lg font-bold tracking-tight">LearnPath</div>
+        <div>
+          <p className="text-3xl font-bold leading-tight">{t("auth.welcomeTitle")}</p>
+          <p className="mt-3 max-w-sm text-base text-white/80">{t("auth.welcomeSubtitle")}</p>
+        </div>
+        <div className="text-sm text-white/50">© LearnPath</div>
+      </aside>
+      <section className="flex min-h-screen flex-col px-6 py-8 md:px-12">
+        <div className="flex justify-end">
+          <ThemeToggle />
+        </div>
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">{children}</div>
+      </section>
     </main>
   );
 }
@@ -35,20 +83,47 @@ export function PrimaryButton({
   );
 }
 
-// Labelled text input, wrapping shadcn Input + Label.
+// Labelled text input, wrapping shadcn Input + Label. Password fields get a
+// show/hide toggle so users can check what they typed.
 export function TextField({
   label,
   hint,
   id,
+  type,
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
+  const t = useTranslations();
+  const [reveal, setReveal] = useState(false);
   const inputId = id ?? `field-${label.replace(/\s+/g, "-").toLowerCase()}`;
+  const isPassword = type === "password";
+  const inputType = isPassword ? (reveal ? "text" : "password") : type;
+
   return (
     <div className="block">
       <Label htmlFor={inputId} className="mb-2 text-sm font-medium text-muted-foreground">
         {label}
       </Label>
-      <Input id={inputId} {...props} className="h-auto rounded-xl px-4 py-3.5 text-base" />
+      <div className="relative">
+        <Input
+          id={inputId}
+          type={inputType}
+          {...props}
+          className={cn("h-auto rounded-xl px-4 py-3.5 text-base", isPassword && "pr-12")}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setReveal((v) => !v)}
+            aria-label={reveal ? t("auth.hidePassword") : t("auth.showPassword")}
+            aria-pressed={reveal}
+            title={reveal ? t("auth.hidePassword") : t("auth.showPassword")}
+            className="absolute inset-y-0 right-0 flex items-center px-3.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:text-foreground"
+            tabIndex={-1}
+          >
+            {reveal ? <EyeOff className="h-5 w-5" aria-hidden /> : <Eye className="h-5 w-5" aria-hidden />}
+          </button>
+        )}
+      </div>
       {hint && <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
@@ -71,6 +146,7 @@ export function ChoiceCard({
 }) {
   return (
     <motion.button
+      type="button"
       onClick={onClick}
       whileTap={{ scale: 0.98 }}
       whileHover={{ y: -1 }}

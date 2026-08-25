@@ -56,7 +56,7 @@ export default function StepPage({ params }: { params: Promise<{ id: string }> }
 
   if (state.kind === "loading") {
     return (
-      <Screen>
+      <Screen size="reading">
         <Skeleton className="h-4 w-24" radius={6} />
         <div className="mt-6">
           <Skeleton className="h-8 w-56" />
@@ -72,7 +72,7 @@ export default function StepPage({ params }: { params: Promise<{ id: string }> }
     // A locked step is a distinct, friendlier state than a generic error.
     if (state.code === "STEP_LOCKED") {
       return (
-        <Screen>
+        <Screen size="reading">
           <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
             <p className="text-4xl">🔒</p>
             <h1 className="text-lg font-bold" style={{ color: "var(--text)" }}>
@@ -89,7 +89,7 @@ export default function StepPage({ params }: { params: Promise<{ id: string }> }
       );
     }
     return (
-      <Screen>
+      <Screen size="reading">
         <div className="flex flex-1 flex-col justify-center gap-4">
           <ErrorBanner message={state.message} />
           <Link href="/dashboard" className="text-center text-sm font-semibold" style={{ color: "var(--accent-text)" }}>
@@ -103,7 +103,7 @@ export default function StepPage({ params }: { params: Promise<{ id: string }> }
   const { step } = state;
 
   return (
-    <Screen>
+    <Screen size="reading">
       {step.type === "lesson" && <LessonView step={step} onComplete={setCompletion} />}
       {step.type === "quiz" && <QuizView step={step} />}
       {step.type === "assignment" && <AssignmentView step={step} onComplete={setCompletion} />}

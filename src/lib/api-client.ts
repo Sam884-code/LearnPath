@@ -97,7 +97,12 @@ export type CreateEnrollmentResponse = {
 
 // ---- Endpoint helpers ----
 
-export function register(input: { name: string; email: string; password: string }) {
+export function register(input: {
+  name: string;
+  email: string;
+  password: string;
+  role?: "student" | "teacher";
+}) {
   return apiFetch<{ token: string; user: ApiUser }>("/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
