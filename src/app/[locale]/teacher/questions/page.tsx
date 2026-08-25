@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { teacherAnswerQuestion, teacherListQuestions, type ApiTeacherQuestion } from "@/lib/api-client";
 import { errorMessage } from "@/lib/errorMessages";
 import { TeacherShell } from "@/components/teacher/TeacherShell";
+import { ListSkeleton } from "@/components/teacher/ListSkeleton";
 import { ErrorBanner } from "@/components/ui";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -50,9 +51,7 @@ export default function QuestionsPage() {
       )}
 
       {questions === null ? (
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          {t("teacher.loading")}
-        </p>
+        <ListSkeleton />
       ) : questions.length === 0 ? (
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
           {t("teacher.questionsEmpty")}

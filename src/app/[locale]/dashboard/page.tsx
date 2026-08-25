@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
+import { Check, Lock } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import {
   ClientApiError,
@@ -167,11 +168,8 @@ function ActiveStepCard({ step, t }: { step: ApiRoadmapStep; t: T }) {
     >
       <Link href={`/steps/${step.id}`} className="block">
         <Card
-          className="gap-0 overflow-hidden rounded-3xl border-2 p-6"
-          style={{
-            borderColor: "var(--success)",
-            boxShadow: "0 14px 40px -14px color-mix(in oklab, var(--success) 55%, transparent)",
-          }}
+          className="active-glow gap-0 overflow-hidden rounded-3xl border-2 p-6"
+          style={{ borderColor: "var(--success)" }}
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--success-text)" }}>
@@ -254,7 +252,7 @@ function RoadmapItem({ step, t }: { step: ApiRoadmapStep; t: T }) {
           color: isDone ? "#fff" : "var(--text-muted)",
         }}
       >
-        {isDone ? "✓" : step.order_index}
+        {isDone ? <Check className="h-4 w-4" strokeWidth={3} aria-hidden /> : step.order_index}
       </span>
 
       <span className="text-xl leading-none" aria-hidden>
@@ -288,9 +286,10 @@ function RoadmapItem({ step, t }: { step: ApiRoadmapStep; t: T }) {
 function StatusPill({ step, t }: { step: ApiRoadmapStep; t: T }) {
   if (step.status === "locked") {
     return (
-      <span className="shrink-0 text-base" aria-label={t("dashboard.statusLocked")}>
-        🔒
-      </span>
+      <Lock
+        className="h-4 w-4 shrink-0 text-muted-foreground"
+        aria-label={t("dashboard.statusLocked")}
+      />
     );
   }
   if (step.status === "active") {
@@ -304,8 +303,12 @@ function StatusPill({ step, t }: { step: ApiRoadmapStep; t: T }) {
       </Badge>
     );
   }
+  // Completed: a muted (soft) green badge.
   return (
-    <span className="shrink-0 text-xs text-muted-foreground">{t("dashboard.statusDone")}</span>
+    <Badge variant="success" className="shrink-0 gap-1">
+      <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
+      {t("dashboard.statusDone")}
+    </Badge>
   );
 }
 

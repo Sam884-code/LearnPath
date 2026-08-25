@@ -12,6 +12,7 @@ import {
 } from "@/lib/api-client";
 import { errorMessage } from "@/lib/errorMessages";
 import { TeacherShell } from "@/components/teacher/TeacherShell";
+import { ListSkeleton } from "@/components/teacher/ListSkeleton";
 import { ErrorBanner } from "@/components/ui";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,9 +67,7 @@ export default function TeacherTemplatesPage() {
       )}
 
       {templates === null ? (
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          {t("teacher.loading")}
-        </p>
+        <ListSkeleton />
       ) : templates.length === 0 ? (
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
           {t("teacher.empty")}

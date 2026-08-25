@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { errorMessage } from "@/lib/errorMessages";
 import { TeacherShell } from "@/components/teacher/TeacherShell";
+import { ListSkeleton } from "@/components/teacher/ListSkeleton";
 import { ErrorBanner } from "@/components/ui";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -95,9 +96,9 @@ export default function TemplateEditorPage({ params }: { params: Promise<{ id: s
       )}
 
       {!template ? (
-        <p className="mt-4 text-sm" style={{ color: "var(--text-muted)" }}>
-          {t("teacher.loading")}
-        </p>
+        <div className="mt-4">
+          <ListSkeleton rows={3} />
+        </div>
       ) : (
         <>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
