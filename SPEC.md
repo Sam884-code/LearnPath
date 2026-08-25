@@ -542,38 +542,25 @@ renders on a single set of CSS custom properties defined in `src/app/globals.css
 
 ### 12.1 Color
 
-Brand is a **crimson → pink** range (`#880d1e · #dd2d4a · #f26a8d · #f49cbb`)
-with a **pale-cyan** (`#cbeef3` family) secondary — a warm-accent / cool-secondary
-complementary balance on a white base. Status colors stay semantic.
+An **earthy** palette: `#283618` forest · `#606c38` olive · `#fefae0` cream ·
+`#dda15e` tan · `#bc6c25` ochre. Cream base, warm tan bands, forest-green text,
+burnt-ochre accent. Colors are used **naturally — no fixed 60/30/10 ratio**.
 
 | Token | Light | Role |
 |---|---|---|
-| `--bg` | `#fbfdfe` | app background |
-| `--surface` | `#ffffff` | cards / panels |
-| `--surface-muted` | `#e8f5f8` | pale-cyan sections, chips (30% secondary) |
-| `--border` | `#d6e9ee` | cyan-tinted hairlines |
-| `--text` / `--text-muted` | `#1a1416` / `#6b7783` | body text |
-| `--accent` / `--accent-hover` | `#dd2d4a` / `#b31834` | brand crimson, **active step**, primary CTA |
-| `--accent-soft` / `--accent-text` | `#fde3e9` / `#880d1e` | soft-pink chips, eyebrow labels |
-| `--success*` | emerald `#059669` | **completed** steps |
+| `--bg` | `#fefae0` | cream app background |
+| `--surface` | `#fffef8` | cards / panels |
+| `--surface-muted` | `#f3e9d2` | warm tan sections, chips |
+| `--border` | `#e6dcc0` | tan hairlines |
+| `--text` / `--text-muted` | `#283618` / `#6f6a4e` | forest text / muted olive |
+| `--accent` / `--accent-hover` | `#bc6c25` / `#a25a1c` | brand ochre, **active step**, primary CTA |
+| `--accent-soft` / `--accent-text` | `#f6e7d1` / `#8a4a14` | tan chips, eyebrow labels |
+| `--success*` | olive `#606c38` | **completed** steps |
 | `--warning*` | amber `#d97706` | **overdue** alerts |
-| `--danger*` | red `#dc2626` | errors / failures |
+| `--danger*` | rust `#b3402e` | errors / failures |
 
-Dark mode re-values the same tokens to a warm-dark theme (`--bg #140b0e`,
-`--surface #1e1317`) with the lighter pinks (`#f26a8d` / `#f49cbb`) as the accent.
-
-**60/30/10 balance** — color is distributed by the classic rule:
-
-| Share | Role | Tokens |
-|---|---|---|
-| **60%** dominant | white / near-white — page & card backgrounds | `--surface`, `--bg` |
-| **30%** secondary | pale cyan — section bands, hairlines, muted text | `--surface-muted`, `--border`, `--text-muted` |
-| **10%** accent | crimson/pink — CTAs, active step, links, progress | `--accent` |
-
-The crimson accent is a **pop**, never a large fill: primary actions, the single
-active step, links, and progress. Large surfaces are white (60%); pale cyan (30%)
-separates and groups (alternating section bands, cards-on-muted, borders,
-secondary text).
+Dark mode re-values the same tokens to a warm dark-forest theme (`--bg #1b2110`,
+`--surface #242c17`, cream text) with the lighter tan `#dda15e` as the accent.
 
 ### 12.2 Typography
 

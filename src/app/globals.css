@@ -7,55 +7,52 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  LearnKata-inspired design system (see SPEC.md §12).
-  Brand: crimson → pink (#dd2d4a / #880d1e), with a pale-cyan (#cbeef3 family)
-  secondary. Status: emerald for completed, amber for overdue, red for errors.
+  Design system (see SPEC.md §12). Earthy palette:
+    #283618 forest (text)  #606c38 olive (completed)  #fefae0 cream (base)
+    #dda15e tan (soft accent)  #bc6c25 ochre (primary accent / active step).
+  Cream base, warm tan bands, forest-green text, burnt-ochre accent; completed
+  steps use olive green. Status: olive = done, amber = overdue, rust = error.
   These custom variables are the app's source of truth (read via inline styles);
-  shadcn/ui tokens are mapped onto them in @theme inline below.
-
-  Color balance follows the 60/30/10 rule:
-    60% dominant  — white / near-white (--surface, --bg): page & card backgrounds
-    30% secondary — pale cyan (--surface-muted, --border, --text-muted):
-                    section bands, hairlines, muted text
-    10% accent    — crimson/pink (--accent): CTAs, the active step, links,
-                    progress. Reserve it as a pop; don't let it fill large areas.
+  shadcn/ui tokens are mapped onto them in @theme inline below. Colors are used
+  naturally (no fixed 60/30/10 ratio) — ochre stays the accent, cream/tan carry
+  the surfaces, forest green anchors text.
 */
 :root {
-  /* neutrals — 60% white base, 30% pale-cyan secondary (CBEEF3 family) */
-  --bg: #fbfdfe;
-  --surface: #ffffff;
-  --surface-muted: #e8f5f8;
-  --border: #d6e9ee;
-  --text: #1a1416;
-  --text-muted: #6b7783;
+  /* neutrals — warm cream base, earthy tan bands, forest-green text */
+  --bg: #fefae0;
+  --surface: #fffef8;
+  --surface-muted: #f3e9d2;
+  --border: #e6dcc0;
+  --text: #283618;
+  --text-muted: #6f6a4e;
 
-  /* brand — crimson → pink (10% accent) */
-  --accent: #dd2d4a;
-  --accent-hover: #b31834;
-  --accent-soft: #fde3e9;
-  --accent-text: #880d1e;
+  /* brand — burnt ochre / tan */
+  --accent: #bc6c25;
+  --accent-hover: #a25a1c;
+  --accent-soft: #f6e7d1;
+  --accent-text: #8a4a14;
 
-  /* status — emerald (completed) */
-  --success: #059669;
-  --success-hover: #047857;
-  --success-soft: #ecfdf5;
-  --success-text: #047857;
+  /* status — olive green (completed) */
+  --success: #606c38;
+  --success-hover: #4e5a2c;
+  --success-soft: #eaeed9;
+  --success-text: #46521f;
 
   /* status — amber (overdue alerts) */
   --warning: #d97706;
-  --warning-soft: #fffbeb;
-  --warning-text: #b45309;
+  --warning-soft: #fdf0d5;
+  --warning-text: #9a5a08;
 
-  /* status — red (errors / failed) */
-  --danger: #dc2626;
-  --danger-soft: #fef2f2;
+  /* status — rust red (errors / failed) */
+  --danger: #b3402e;
+  --danger-soft: #f7e3dd;
 
   /* soft, layered shadows (LearnKata) */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  --shadow-primary: 0 4px 12px -2px rgba(221, 45, 74, 0.3);
-  --shadow-glow: 0 0 30px -10px rgba(221, 45, 74, 0.5);
+  --shadow-primary: 0 4px 12px -2px rgba(188, 108, 37, 0.3);
+  --shadow-glow: 0 0 30px -10px rgba(188, 108, 37, 0.5);
 
   --skeleton-shine: rgba(255, 255, 255, 0.6);
   --radius: 0.5rem;
@@ -64,36 +61,36 @@
 /* Dark theme: the same variables re-valued, so the whole UI (which reads these
    vars) responds to the theme toggle without per-component changes. */
 .dark {
-  --bg: #140b0e;
-  --surface: #1e1317;
-  --surface-muted: #2a1b20;
-  --border: #3a2830;
-  --text: #f7ecef;
-  --text-muted: #c0a6ad;
+  --bg: #1b2110;
+  --surface: #242c17;
+  --surface-muted: #2f3820;
+  --border: #3d4529;
+  --text: #fefae0;
+  --text-muted: #b8b48f;
 
-  /* dark accent uses the lighter pinks (F26A8D / F49CBB) for contrast */
-  --accent: #f26a8d;
-  --accent-hover: #f49cbb;
-  --accent-soft: #3a1420;
-  --accent-text: #f9b7c8;
+  /* dark accent uses the lighter tan (DDA15E) for contrast on dark forest */
+  --accent: #dda15e;
+  --accent-hover: #e8b77e;
+  --accent-soft: #3a2c17;
+  --accent-text: #e9bd86;
 
-  --success: #10b981;
-  --success-hover: #34d399;
-  --success-soft: #052e24;
-  --success-text: #6ee7b7;
+  --success: #8a9a52;
+  --success-hover: #a3b26b;
+  --success-soft: #26301a;
+  --success-text: #b7c483;
 
-  --warning: #f59e0b;
-  --warning-soft: #3a2a08;
-  --warning-text: #fcd34d;
+  --warning: #e0a53a;
+  --warning-soft: #3a2c0e;
+  --warning-text: #f2c66b;
 
-  --danger: #f87171;
-  --danger-soft: #3a1414;
+  --danger: #e07a63;
+  --danger-soft: #3a1c16;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
-  --shadow-primary: 0 4px 12px -2px rgba(242, 106, 141, 0.35);
-  --shadow-glow: 0 0 30px -10px rgba(242, 106, 141, 0.6);
+  --shadow-primary: 0 4px 12px -2px rgba(221, 161, 94, 0.35);
+  --shadow-glow: 0 0 30px -10px rgba(221, 161, 94, 0.6);
 
   --skeleton-shine: rgba(255, 255, 255, 0.05);
 }
