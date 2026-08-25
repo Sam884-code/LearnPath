@@ -49,12 +49,12 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         className="relative hidden flex-col justify-between p-12 text-white md:flex"
         style={{ background: "linear-gradient(160deg, var(--accent), var(--accent-hover))" }}
       >
-        <div className="text-lg font-bold tracking-tight">LearnPath</div>
+        <div className="text-lg font-bold tracking-tight">{t("app.name")}</div>
         <div>
           <p className="text-3xl font-bold leading-tight">{t("auth.welcomeTitle")}</p>
           <p className="mt-3 max-w-sm text-base text-white/80">{t("auth.welcomeSubtitle")}</p>
         </div>
-        <div className="text-sm text-white/50">© LearnPath</div>
+        <div className="text-sm text-white/50">© {t("app.name")}</div>
       </aside>
       <section className="flex min-h-screen flex-col px-6 py-8 md:px-12">
         <div className="flex justify-end">
