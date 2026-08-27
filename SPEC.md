@@ -617,3 +617,85 @@ grading queue is scoped to their own students.
   (`listPendingSubmissions(prisma, teacherId)`).
 - **Screens.** Teacher: `/teacher/classroom` (join code + copy/regenerate +
   member list). Student: a "join a class" card on the dashboard.
+
+---
+
+## 14. AI Knowledge Base & Roadmap Generation (RAG)
+
+A retrieval-augmented pipeline: teachers upload PDF textbooks; we extract, chunk,
+and embed the text into pgvector; a generation function retrieves the relevant
+context for a subject/grade and asks Claude to produce a **structured JSON
+roadmap**, which becomes a **draft `RoadmapTemplate`** the teacher reviews and
+publishes through the existing editor (§5.8). This reuses the whole
+enrollment / `advanceStep` machinery unchanged — AI only authors the template.
+
+### 14.1 Providers & models
+
+| Concern | Choice | Notes |
+|---|---|---|
+| Roadmap generation | **Claude `claude-opus-5`** via `@anthropic-ai/sdk` | Structured output (`output_config.format` = JSON Schema) + `messages.parse()`; adaptive thinking; stream for large outputs. Server-side only. |
+| Embeddings | **OpenAI `text-embedding-3-small`** (1536-dim) | Anthropic has no first-party embeddings API. Provider is behind an `EmbeddingProvider` interface so it can be swapped (e.g. Voyage). |
+| PDF text | `pdfjs-dist` (or `pdf-parse`) | Per-page text extraction, server-side. |
+| Vector store | **Postgres + `pgvector`** | `vector(1536)` column; cosine distance (`<=>`) with an HNSW/IVFFlat index. |
+
+Keys (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`) are validated on boot (§7 env
+validation) and never exposed to the client.
+
+### 14.2 Data model
+
+- **`textbooks`** — `subject_id` (fk), `grade_level` (int, nullable),
+  `title`, `file_key`/`file_name`/`page_count`, `uploaded_by` (fk users,
+  teacher), `status` enum(`uploaded`,`processing`,`ready`,`failed`), `error`.
+- **`textbook_chunks`** — `textbook_id` (fk, cascade), `chunk_index`,
+  `content` (text), `page_start`/`page_end`, `token_count`,
+  `embedding vector(1536)`. Index: `USING hnsw (embedding vector_cosine_ops)`.
+  Prisma maps the column as `Unsupported("vector(1536)")`; similarity search
+  runs via `$queryRaw` (`ORDER BY embedding <=> $1 LIMIT k`).
+- **`roadmap_generations`** — audit row: `subject_id`, `grade_level`, `track`,
+  `model`, `status`, `created_by`, `template_id` (the draft it produced),
+  `prompt_tokens`/`output_tokens`. Lets teachers see/re-run generations.
+
+`vector` is added to the datasource `extensions` list (alongside `citext`) and
+enabled with `CREATE EXTENSION IF NOT EXISTS vector` in the migration.
+
+### 14.3 Pipeline
+
+1. **Upload** — `POST /teacher/textbooks` (multipart PDF). Validate (pdf,
+   ≤ ~50 MB), store via the existing `StorageDriver` (§5.6), create a
+   `textbooks` row (`status=uploaded`), kick off ingestion.
+2. **Ingest** (`textbookIngest` service, async) — download → extract text per
+   page → chunk (~600 tokens, ~80 overlap, page-aware) → embed in batches →
+   insert `textbook_chunks` with vectors → `status=ready` (or `failed` + error).
+3. **Retrieve** — embed the generation query, cosine-search chunks filtered by
+   `subject_id` (+ `grade_level` when set), take top-k (~12) as context.
+4. **Generate** — `POST /teacher/roadmaps/generate { subject_id, grade_level,
+   track }` → build a prompt from the retrieved context + a strict JSON Schema
+   (steps: `title`, `type` lesson|quiz|assignment, `description`,
+   `estimated_minutes`, `pass_score`, quiz `questions[]`) → Claude with
+   `output_config.format` → validate with Zod → map into a **draft
+   `RoadmapTemplate` + `TemplateStep`s** (`is_published=false`), returning its
+   id so the teacher opens it in the existing editor to review/edit/publish.
+
+### 14.4 Endpoints (teacher-only)
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/teacher/textbooks` | Upload a PDF; starts ingestion |
+| GET | `/teacher/textbooks` | List with `status` (+ chunk counts) |
+| DELETE | `/teacher/textbooks/:id` | Remove textbook + chunks + blob |
+| POST | `/teacher/roadmaps/generate` | Generate a draft template from the KB |
+
+### 14.5 Guardrails
+
+- All routes are `requireRole("teacher")`; keys server-side only.
+- Generation output is a **draft**, never auto-published or auto-enrolled — a
+  human teacher always reviews before students see it.
+- Retrieval is scoped to the requesting subject/grade; no cross-subject leakage.
+- Ingestion and generation are rate-limited (§11.1) and their token usage logged
+  (§11.2) for cost visibility.
+- **Vector store is pgvector everywhere, no local fallback** (chosen approach):
+  point the app's single `DATABASE_URL` at a `pgvector`-enabled hosted Postgres
+  (a free Supabase/Neon project) when working on KB features and in prod. One
+  Prisma datasource, one vector-search code path, no Docker. The embedded
+  dev Postgres stays available for non-KB local work; KB work needs the hosted
+  connection string.
