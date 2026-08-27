@@ -2,36 +2,61 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
-import { Check, Lock } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { Check, Lock, ArrowRight } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import {
   ClientApiError,
   getMe,
   getRoadmap,
+  logout,
   type ApiRoadmap,
   type ApiRoadmapStep,
 } from "@/lib/api-client";
 import { errorMessage } from "@/lib/errorMessages";
-import { ErrorBanner, Eyebrow, PrimaryButton, Screen, Skeleton } from "@/components/ui";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { JoinClassCard } from "@/components/classroom/JoinClassCard";
 
-const TYPE_ICON: Record<ApiRoadmapStep["type"], string> = {
-  lesson: "📖",
-  quiz: "📝",
-  assignment: "📤",
-};
+// The student dashboard, recreated from the LearnPath UI handoff (README §5).
+// Self-contained blue (#2563eb) + white palette so it matches the mockup exactly
+// without touching the app's global (earthy) design tokens. Real data only —
+// progress, roadmap steps, review status and JoinClassCard all come from the API.
 
-const spring = { type: "spring", stiffness: 380, damping: 30 } as const;
+const serif = "var(--font-noto-serif-armenian), Georgia, serif";
+
+// Design tokens (README "Design Tokens").
+const C = {
+  text: "#111827",
+  text2: "#374151",
+  muted: "#6b7280",
+  faint: "#9ca3af",
+  surface: "#ffffff",
+  surface2: "#fafbfc",
+  border: "#e5e7eb",
+  border2: "#e8eaee",
+  border3: "#eef0f2",
+  border4: "#f0f1f3",
+  hair: "#f1f2f4",
+  hair2: "#f4f5f6",
+  blue: "#2563eb",
+  blueHover: "#1d4ed8",
+  blueTint: "#eff6ff",
+  blueBorder: "#dbeafe",
+  ochreBorder: "#f0dcc4",
+  olive: "#606c38",
+  oliveText: "#4b5628",
+  oliveTint: "#f2f4ea",
+  amber: "#b45309",
+  amberTint: "#fffbeb",
+  rail: "#eceef0",
+};
 
 type LoadState =
   | { kind: "loading" }
   | { kind: "error"; message: string }
   | { kind: "empty" }
-  | { kind: "ready"; roadmap: ApiRoadmap };
+  | { kind: "ready"; userName: string; roadmap: ApiRoadmap };
+
+type T = ReturnType<typeof useTranslations>;
 
 export default function DashboardPage() {
   const t = useTranslations();
@@ -49,7 +74,7 @@ export default function DashboardPage() {
           return;
         }
         const roadmap = await getRoadmap(live.id);
-        if (!cancelled) setState({ kind: "ready", roadmap });
+        if (!cancelled) setState({ kind: "ready", userName: me.user.name, roadmap });
       } catch (err) {
         if (cancelled) return;
         if (err instanceof ClientApiError && err.code === "UNAUTHORIZED") {
@@ -64,290 +89,473 @@ export default function DashboardPage() {
     };
   }, [router, t]);
 
-  if (state.kind === "loading") return <DashboardSkeleton />;
+  if (state.kind === "loading") return <CenteredNote text={t("common.loading")} />;
+  if (state.kind === "error") return <CenteredNote text={state.message} tone="error" />;
+  if (state.kind === "empty") return <EmptyState t={t} onStart={() => router.replace("/onboarding")} />;
 
-  if (state.kind === "error") {
-    return (
-      <Screen>
-        <div className="flex flex-1 flex-col justify-center">
-          <ErrorBanner message={state.message} />
-        </div>
-      </Screen>
-    );
-  }
-
-  if (state.kind === "empty") {
-    return (
-      <Screen>
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-          <p className="text-5xl">🧭</p>
-          <h1 className="text-xl font-bold text-foreground">{t("dashboard.noEnrollmentTitle")}</h1>
-          <p className="mb-4 text-sm text-muted-foreground">{t("dashboard.noEnrollmentSubtitle")}</p>
-          <div className="w-full">
-            <PrimaryButton onClick={() => router.replace("/onboarding")}>
-              {t("dashboard.noEnrollmentAction")}
-            </PrimaryButton>
-          </div>
-          <div className="mt-4 w-full text-left">
-            <JoinClassCard />
-          </div>
-        </div>
-      </Screen>
-    );
-  }
-
-  const { roadmap } = state;
-  const { progress } = roadmap;
-  const activeStep = roadmap.steps.find((s) => s.id === progress.active_step_id) ?? null;
-  const finished = roadmap.enrollment.completed_at !== null;
-
-  return (
-    <Screen size="wide">
-      <motion.header
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="mb-5 pt-2"
-      >
-        <Eyebrow>{t("dashboard.title")}</Eyebrow>
-        <h1 className="mt-1 text-3xl font-semibold text-foreground">{roadmap.enrollment.subject.title}</h1>
-      </motion.header>
-
-      {/* On desktop: "what's next" on the left, the full path on the right.
-          On mobile everything stacks in reading order. */}
-      <div className="md:grid md:grid-cols-2 md:items-start md:gap-8">
-        <div className="md:sticky md:top-8">
-          <ProgressCard percent={progress.percent} done={progress.done} total={progress.total} t={t} />
-          {finished ? (
-            <FinishedCard t={t} />
-          ) : activeStep ? (
-            <ActiveStepCard step={activeStep} t={t} />
-          ) : null}
-          <div className="mt-4">
-            <JoinClassCard />
-          </div>
-        </div>
-
-        <div className="mt-8 md:mt-0">
-          <div className="mb-3">
-            <Eyebrow>{t("dashboard.wholePath")}</Eyebrow>
-          </div>
-          <motion.ol
-            className="flex flex-col gap-2"
-            initial="hidden"
-            animate="show"
-            variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-          >
-            {roadmap.steps.map((s) => (
-              <motion.li key={s.id} variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}>
-                <RoadmapItem step={s} t={t} />
-              </motion.li>
-            ))}
-          </motion.ol>
-        </div>
-      </div>
-    </Screen>
-  );
+  return <Dashboard t={t} userName={state.userName} roadmap={state.roadmap} onLogout={async () => {
+    try { await logout(); } finally { router.replace("/"); }
+  }} />;
 }
 
-type T = ReturnType<typeof useTranslations>;
+// ---- helpers ----
 
-function ProgressCard({ percent, done, total, t }: { percent: number; done: number; total: number; t: T }) {
-  return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.05 }}>
-      <Card className="rounded-2xl p-5 shadow-[var(--shadow-md)]">
-        <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="font-medium text-foreground">{t("dashboard.progressLabel")}</span>
-          <span className="text-muted-foreground">
-            {t("dashboard.progressCount", { done, total })} · {percent}%
-          </span>
-        </div>
-        {/* percent comes straight from the API — never recomputed here. */}
-        <Progress value={percent} className="h-2.5" />
-      </Card>
-    </motion.div>
-  );
+function initials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0] ?? "")
+    .join("")
+    .toUpperCase();
 }
 
-// The one thing that should be obvious within a second: what to do next.
-// Emerald glow + hover elevation + a soft pulsing ring behind the type icon.
-function ActiveStepCard({ step, t }: { step: ApiRoadmapStep; t: T }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      whileHover={{ y: -4 }}
-      transition={spring}
-      className="mt-4"
-    >
-      <Link href={`/steps/${step.id}`} className="block">
-        <Card
-          className="active-glow gap-0 overflow-hidden rounded-3xl border-2 p-6 shadow-[var(--shadow-md)]"
-          style={{ borderColor: "var(--accent)" }}
-        >
-          <div className="flex items-center justify-between">
-            <Eyebrow>{t("dashboard.activeStepLabel")}</Eyebrow>
-            {step.overdue && <Badge variant="warning">{t("dashboard.overdue")}</Badge>}
-          </div>
-
-          <div className="mt-3 flex items-start gap-3">
-            <span className="relative flex h-11 w-11 shrink-0 items-center justify-center">
-              <motion.span
-                aria-hidden
-                className="absolute inset-0 rounded-full"
-                style={{ background: "var(--accent-soft)" }}
-                animate={{ scale: [1, 1.35, 1], opacity: [0.6, 0, 0.6] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <span className="relative text-3xl leading-none">{TYPE_ICON[step.type]}</span>
-            </span>
-            <div className="flex-1">
-              <p className="font-sans text-xs font-medium text-muted-foreground">{t(`stepType.${step.type}`)}</p>
-              <h2 className="text-xl font-semibold leading-snug text-foreground">{step.title}</h2>
-            </div>
-          </div>
-
-          <div className="mt-5 w-full rounded-lg bg-primary px-5 py-3.5 text-center text-base font-semibold text-primary-foreground shadow-[var(--shadow-primary)]">
-            {t("dashboard.openStep")}
-          </div>
-        </Card>
-      </Link>
-    </motion.div>
-  );
+function daysOverdue(due: string): number {
+  const diff = Date.now() - new Date(due).getTime();
+  return Math.max(1, Math.ceil(diff / 86_400_000));
 }
 
-function FinishedCard({ t }: { t: T }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={spring}
-      className="mt-4 rounded-3xl p-7 text-center"
-      style={{ background: "var(--success-soft)" }}
-    >
-      <motion.p
-        className="text-3xl"
-        animate={{ scale: [1, 1.15, 1] }}
-        transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-      >
-        🎉
-      </motion.p>
-      <h2 className="mt-2 text-lg font-bold" style={{ color: "var(--success-text)" }}>
-        {t("dashboard.finishedTitle")}
-      </h2>
-      <p className="mt-1 text-sm" style={{ color: "var(--success-text)" }}>
-        {t("dashboard.finishedSubtitle")}
-      </p>
-    </motion.div>
-  );
+// Explicit Armenian month names — `Intl` with "hy-AM" is unreliable across
+// runtimes (falls back to another locale's month names when ICU data is thin).
+const HY_MONTHS = [
+  "հունվարի", "փետրվարի", "մարտի", "ապրիլի", "մայիսի", "հունիսի",
+  "հուլիսի", "օգոստոսի", "սեպտեմբերի", "հոկտեմբերի", "նոյեմբերի", "դեկտեմբերի",
+];
+
+function formatDeadline(due: string | null, t: T): string {
+  if (!due) return t("dashboard.noDeadline");
+  const d = new Date(due);
+  if (Number.isNaN(d.getTime())) return due.slice(0, 10);
+  return `${d.getDate()} ${HY_MONTHS[d.getMonth()]}`;
 }
 
-function RoadmapItem({ step, t }: { step: ApiRoadmapStep; t: T }) {
-  const isLocked = step.status === "locked";
-  const isActive = step.status === "active";
-  const isDone = step.status === "done";
+function ctaLabel(step: ApiRoadmapStep, t: T): string {
+  if (step.awaiting_review) return t("dashboard.ctaStatus");
+  if (step.type === "lesson") return t("dashboard.ctaLesson");
+  if (step.type === "quiz") return t("dashboard.ctaQuiz");
+  return t("dashboard.ctaAssignment");
+}
 
-  const inner = (
-    <Card
-      className="flex flex-row items-center gap-4 rounded-2xl border px-4 py-4 shadow-[var(--shadow-sm)]"
+// ---- shell states ----
+
+function CenteredNote({ text, tone }: { text: string; tone?: "error" }) {
+  return (
+    <main
       style={{
-        borderColor: isActive ? "var(--accent)" : "var(--border)",
-        background: isLocked ? "var(--surface-muted)" : "var(--surface)",
-        opacity: isLocked ? 0.55 : 1,
-        boxShadow: isActive ? "0 8px 24px -12px color-mix(in oklab, var(--accent) 50%, transparent)" : undefined,
+        minHeight: "100vh",
+        display: "grid",
+        placeItems: "center",
+        background: C.surface,
+        color: tone === "error" ? "#b91c1c" : C.muted,
+        fontSize: 14,
+        padding: 24,
+        textAlign: "center",
       }}
     >
-      {/* Numbered-path numeral, colored by state: blue active, emerald done. */}
-      <span
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-serif text-base font-semibold tabular-nums"
-        style={{
-          background: isDone ? "var(--success)" : isActive ? "var(--accent)" : "var(--surface-muted)",
-          color: isDone || isActive ? "#fff" : "var(--text-muted)",
-        }}
-      >
-        {isDone ? <Check className="h-4 w-4" strokeWidth={3} aria-hidden /> : step.order_index}
-      </span>
-
-      <span className="min-w-0 flex-1">
-        <span
-          className="block text-[11px] font-semibold uppercase tracking-wider"
-          style={{ color: isActive ? "var(--accent-text)" : "var(--text-muted)" }}
-        >
-          {t(`stepType.${step.type}`)}
-        </span>
-        <span className="block truncate text-sm font-medium text-foreground">{step.title}</span>
-        {isDone && step.type === "quiz" && step.score !== null && (
-          <span className="text-xs text-muted-foreground">{t("dashboard.scoreLabel", { score: step.score })}</span>
-        )}
-      </span>
-
-      <StatusPill step={step} t={t} />
-    </Card>
-  );
-
-  // Locked steps are not tappable and must not navigate.
-  if (isLocked) {
-    return <div aria-disabled>{inner}</div>;
-  }
-  return (
-    <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.99 }} transition={spring}>
-      <Link href={`/steps/${step.id}`} className="block">
-        {inner}
-      </Link>
-    </motion.div>
+      {text}
+    </main>
   );
 }
 
-function StatusPill({ step, t }: { step: ApiRoadmapStep; t: T }) {
-  if (step.status === "locked") {
+function EmptyState({ t, onStart }: { t: T; onStart: () => void }) {
+  return (
+    <main style={{ minHeight: "100vh", background: C.surface, color: C.text }}>
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "120px 24px", textAlign: "center" }}>
+        <h1 className="dgs-serif" style={{ fontFamily: serif, fontSize: 30, fontWeight: 600 }}>
+          {t("dashboard.noEnrollmentTitle")}
+        </h1>
+        <p style={{ color: C.muted, marginTop: 10 }}>{t("dashboard.noEnrollmentSubtitle")}</p>
+        <button
+          onClick={onStart}
+          style={{
+            marginTop: 24,
+            background: C.blue,
+            color: "#fff",
+            border: "none",
+            borderRadius: 12,
+            padding: "14px 26px",
+            fontSize: 15,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          {t("dashboard.noEnrollmentAction")}
+        </button>
+        <div style={{ marginTop: 28, textAlign: "left" }}>
+          <JoinClassCard />
+        </div>
+      </div>
+    </main>
+  );
+}
+
+// ---- dashboard ----
+
+function Dashboard({
+  t,
+  userName,
+  roadmap,
+  onLogout,
+}: {
+  t: T;
+  userName: string;
+  roadmap: ApiRoadmap;
+  onLogout: () => void;
+}) {
+  const reduce = useReducedMotion();
+  const { progress, steps } = roadmap;
+  const finished = roadmap.enrollment.completed_at !== null;
+  const activeStep = steps.find((s) => s.id === progress.active_step_id) ?? null;
+  const trackLabel =
+    roadmap.enrollment.track === "exam" ? t("dashboard.trackExamPath") : t("dashboard.trackDepthPath");
+
+  const scored = steps.filter((s) => s.score !== null).map((s) => s.score as number);
+  const average = scored.length ? Math.round(scored.reduce((a, b) => a + b, 0) / scored.length) : null;
+
+  const rise = reduce ? {} : { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 } };
+
+  return (
+    <main style={{ background: C.surface, color: C.text, minHeight: "100vh", fontSize: 15, lineHeight: 1.6 }}>
+      <ScopedStyles />
+
+      {/* Header */}
+      <header
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 30,
+          height: 68,
+          background: "rgba(255,255,255,.86)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderBottom: `1px solid ${C.border4}`,
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1180,
+            margin: "0 auto",
+            padding: "0 40px",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <span style={{ fontFamily: serif, fontSize: 20, fontWeight: 600, letterSpacing: "-.01em", color: C.text }}>
+            LearnPath
+          </span>
+          <div className="dgs-user" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ textAlign: "right", lineHeight: 1.3 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{userName}</div>
+              <button
+                onClick={onLogout}
+                style={{ fontSize: 12, color: C.faint, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              >
+                {t("dashboard.logout")}
+              </button>
+            </div>
+            <span
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 999,
+                background: C.blueTint,
+                color: C.blue,
+                fontFamily: serif,
+                fontWeight: 600,
+                fontSize: 13,
+                display: "grid",
+                placeItems: "center",
+              }}
+            >
+              {initials(userName)}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <div className="dgs-page" style={{ maxWidth: 1180, margin: "0 auto", padding: "48px 40px 96px" }}>
+        {/* Hero */}
+        <motion.div className="dgs-head" {...rise} transition={{ duration: 0.4 }} style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 40 }}>
+          <div>
+            <p style={eyebrow}>{trackLabel}</p>
+            <h1 style={{ fontFamily: serif, fontSize: "clamp(30px,6.4vw,44px)", fontWeight: 600, letterSpacing: "-.02em", color: C.text, margin: "6px 0 0", textWrap: "pretty" }}>
+              {roadmap.enrollment.subject.title}
+            </h1>
+            <p style={{ color: C.muted, marginTop: 8 }}>
+              {finished
+                ? t("dashboard.finishedTitle")
+                : activeStep
+                  ? t("dashboard.activeStepLine", { title: activeStep.title })
+                  : ""}
+            </p>
+          </div>
+          <div className="dgs-stats" style={{ display: "flex", gap: 44 }}>
+            <Figure value={`${progress.percent}%`} label={t("dashboard.statProgress")} />
+            <Figure value={`${progress.done}/${progress.total}`} label={t("dashboard.statSteps")} />
+            <Figure value={average !== null ? `${average}%` : "—"} label={t("dashboard.statAverage")} />
+          </div>
+        </motion.div>
+
+        {/* Progress card */}
+        <motion.div
+          {...rise}
+          transition={{ duration: 0.4, delay: 0.05 }}
+          style={{ border: `1px solid ${C.border3}`, borderRadius: 16, padding: "22px 24px", marginTop: 44, background: C.surface }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 16, flexWrap: "wrap" }}>
+            <span style={{ fontFamily: serif, fontSize: 17, fontWeight: 600, color: C.text }}>
+              {t("dashboard.progressLabel")}՝ {progress.percent}% · {progress.done} / {progress.total} {t("dashboard.statSteps").toLowerCase()}
+            </span>
+            {activeStep && (
+              <span style={{ fontSize: 13, color: C.faint }}>
+                {t("dashboard.activeStepLabel")}՝ {activeStep.order_index} · {formatDeadline(activeStep.due_date, t)}
+              </span>
+            )}
+          </div>
+          <div style={{ marginTop: 14, height: 6, background: C.hair, borderRadius: 3, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${progress.percent}%`, background: C.blue, borderRadius: 3, transition: "width .6s cubic-bezier(.22,1,.36,1)" }} />
+          </div>
+        </motion.div>
+
+        {/* Body */}
+        <div className="dgs-cols" style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 64, marginTop: 44 }}>
+          {/* Roadmap */}
+          <div style={{ position: "relative" }}>
+            <span aria-hidden style={{ position: "absolute", left: 23, top: 34, bottom: 26, width: 1, background: C.rail }} />
+            {steps.map((s) => (
+              <RoadmapRow key={s.id} step={s} t={t} isActive={s.id === progress.active_step_id} />
+            ))}
+          </div>
+
+          {/* Right rail */}
+          <aside className="dgs-rail" style={{ position: "sticky", top: 92, alignSelf: "start", display: "flex", flexDirection: "column", gap: 20 }}>
+            <ReviewList steps={steps} t={t} />
+            <JoinClassCard />
+          </aside>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+const eyebrow: React.CSSProperties = {
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: ".11em",
+  textTransform: "uppercase",
+  color: C.blue,
+  margin: 0,
+};
+
+function Figure({ value, label }: { value: string; label: string }) {
+  return (
+    <div>
+      <div style={{ fontFamily: serif, fontSize: 34, fontWeight: 600, color: C.text, lineHeight: 1.1 }}>{value}</div>
+      <div style={{ fontSize: 12, letterSpacing: ".06em", textTransform: "uppercase", color: C.faint, marginTop: 4 }}>{label}</div>
+    </div>
+  );
+}
+
+function Pill({ text, fg, bg }: { text: string; fg: string; bg: string }) {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: ".05em",
+        textTransform: "uppercase",
+        padding: "3px 9px",
+        borderRadius: 999,
+        color: fg,
+        background: bg,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {text}
+    </span>
+  );
+}
+
+function StepBadge({ step, t }: { step: ApiRoadmapStep; t: T }) {
+  if (step.status === "done") return <Pill text={t("dashboard.badgeDone")} fg={C.oliveText} bg={C.oliveTint} />;
+  if (step.awaiting_review) return <Pill text={t("dashboard.awaitingReview")} fg={C.blueHover} bg={C.blueTint} />;
+  if (step.status === "active" && step.overdue)
+    return <Pill text={t("dashboard.overdueDays", { n: step.due_date ? daysOverdue(step.due_date) : 0 })} fg={C.amber} bg={C.amberTint} />;
+  return null;
+}
+
+function Marker({ step }: { step: ApiRoadmapStep }) {
+  const base: React.CSSProperties = {
+    width: 34,
+    height: 34,
+    marginLeft: 6,
+    borderRadius: 999,
+    display: "grid",
+    placeItems: "center",
+    fontFamily: serif,
+    fontSize: 13,
+    fontWeight: 600,
+    position: "relative",
+    zIndex: 1,
+  };
+  if (step.status === "done") {
     return (
-      <Lock
-        className="h-4 w-4 shrink-0 text-muted-foreground"
-        aria-label={t("dashboard.statusLocked")}
-      />
+      <span style={{ ...base, background: C.olive, color: "#fff" }}>
+        <Check size={16} strokeWidth={2.4} aria-hidden />
+      </span>
     );
   }
   if (step.status === "active") {
-    return step.overdue ? (
-      <Badge variant="warning" className="shrink-0">
-        {t("dashboard.overdue")}
-      </Badge>
-    ) : (
-      <Badge variant="accent" className="shrink-0">
-        {t("dashboard.statusActive")}
-      </Badge>
+    return (
+      <span className="dgs-glow" style={{ ...base, background: C.blue, color: "#fff" }}>
+        {step.order_index}
+      </span>
     );
   }
-  // Completed: a muted (soft) green badge.
   return (
-    <Badge variant="success" className="shrink-0 gap-1">
-      <Check className="h-3 w-3" strokeWidth={3} aria-hidden />
-      {t("dashboard.statusDone")}
-    </Badge>
+    <span style={{ ...base, background: C.hair2, color: C.faint }}>
+      <Lock size={15} strokeWidth={1.8} aria-hidden />
+    </span>
   );
 }
 
-function DashboardSkeleton() {
+function RoadmapRow({ step, t, isActive }: { step: ApiRoadmapStep; t: T; isActive: boolean }) {
+  const locked = step.status === "locked";
+  const done = step.status === "done";
+  const titleColor = done ? C.text2 : locked ? C.faint : C.text;
+
+  const meta: string[] = [t(`stepType.${step.type}`)];
+  if (done && step.type === "quiz" && step.score !== null) meta.push(t("dashboard.scoreLabel", { score: step.score }));
+  else if (isActive) meta.push(step.overdue ? t("dashboard.overdueDays", { n: step.due_date ? daysOverdue(step.due_date) : 0 }) : formatDeadline(step.due_date, t));
+
   return (
-    <Screen size="wide">
-      <div className="mb-5 pt-2">
-        <Skeleton className="h-3 w-20" radius={6} />
-        <div className="mt-2">
-          <Skeleton className="h-8 w-40" />
+    <div style={{ display: "grid", gridTemplateColumns: "48px 1fr", gap: 20, padding: "16px 0", opacity: locked ? 0.5 : 1 }}>
+      <Marker step={step} />
+      <div style={{ minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <span style={{ fontFamily: serif, fontSize: 19, fontWeight: 600, color: titleColor }}>{step.title}</span>
+          <StepBadge step={step} t={t} />
         </div>
+        <p style={{ fontSize: 13, color: C.faint, marginTop: 4 }}>{meta.join(" · ")}</p>
+        {isActive && <ActiveStepCard step={step} t={t} />}
       </div>
-      <Skeleton className="h-20 w-full" radius={16} />
-      <div className="mt-4">
-        <Skeleton className="h-44 w-full" radius={24} />
+    </div>
+  );
+}
+
+function ActiveStepCard({ step, t }: { step: ApiRoadmapStep; t: T }) {
+  const blurb =
+    step.type === "lesson"
+      ? t("dashboard.blurbLesson")
+      : step.type === "quiz"
+        ? t("dashboard.blurbQuiz")
+        : t("dashboard.blurbAssignment");
+
+  return (
+    <div
+      className="dgs-glow-ochre"
+      style={{ background: "#fff", border: `1px solid ${C.ochreBorder}`, borderRadius: 16, padding: "26px 28px 24px", marginTop: 16 }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+        <p style={eyebrow}>{t("dashboard.activeStepLabel")}</p>
+        <StepBadge step={step} t={t} />
       </div>
-      <div className="mt-8">
-        <Skeleton className="mb-3 h-3 w-24" radius={6} />
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full" radius={16} />
+      <h3 style={{ fontFamily: serif, fontSize: "clamp(22px,4.4vw,27px)", fontWeight: 600, color: C.text, margin: "10px 0 0", textWrap: "pretty" }}>
+        {step.title}
+      </h3>
+      <p style={{ color: C.muted, marginTop: 8 }}>{blurb}</p>
+      <div style={{ display: "flex", gap: 22, marginTop: 14, fontSize: 13, color: C.muted, flexWrap: "wrap" }}>
+        <span>{t(`stepType.${step.type}`)}</span>
+        <span>{step.overdue ? t("dashboard.overdueDays", { n: step.due_date ? daysOverdue(step.due_date) : 0 }) : formatDeadline(step.due_date, t)}</span>
+      </div>
+      <div style={{ display: "flex", gap: 12, marginTop: 20, flexWrap: "wrap" }}>
+        <Link
+          href={`/steps/${step.id}`}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            background: C.blue,
+            color: "#fff",
+            borderRadius: 11,
+            padding: "13px 22px",
+            fontSize: 14,
+            fontWeight: 600,
+          }}
+        >
+          {ctaLabel(step, t)} <ArrowRight size={16} aria-hidden />
+        </Link>
+        <Link
+          href={`/steps/${step.id}`}
+          style={{ display: "inline-flex", alignItems: "center", background: "#fff", color: C.text2, border: `1px solid ${C.border}`, borderRadius: 11, padding: "13px 20px", fontSize: 14, fontWeight: 500 }}
+        >
+          {t("dashboard.downloadMaterials")}
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function ReviewList({ steps, t }: { steps: ApiRoadmapStep[]; t: T }) {
+  const pending = steps.filter((s) => s.awaiting_review);
+  const graded = steps.filter((s) => s.type === "assignment" && s.status === "done" && s.score !== null).slice(-2);
+
+  return (
+    <section style={{ border: `1px solid ${C.border3}`, borderRadius: 16, padding: 22, background: C.surface }}>
+      <h2 style={{ fontSize: 12, letterSpacing: ".06em", textTransform: "uppercase", color: C.faint, margin: 0 }}>
+        {t("dashboard.reviewSectionTitle")}
+      </h2>
+      {pending.length === 0 && graded.length === 0 ? (
+        <p style={{ fontSize: 13, color: C.faint, marginTop: 12 }}>{t("dashboard.reviewEmpty")}</p>
+      ) : (
+        <ul style={{ listStyle: "none", margin: "14px 0 0", padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+          {pending.map((s) => (
+            <li key={s.id} style={{ border: `1px solid ${C.border3}`, borderRadius: 14, padding: "14px 16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: C.text2, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {s.title}
+                </span>
+                <Pill text={t("dashboard.awaitingReview")} fg={C.blueHover} bg={C.blueTint} />
+              </div>
+            </li>
           ))}
-        </div>
-      </div>
-    </Screen>
+          {graded.map((s) => (
+            <li key={s.id} style={{ paddingTop: 12, borderTop: pending.length ? `1px solid ${C.hair}` : "none" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 500, color: C.text2, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {s.title}
+                </span>
+                <Pill text={`${t("dashboard.reviewed")} · ${s.score}`} fg={C.oliveText} bg={C.oliveTint} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+// Scoped keyframes + responsive rules (README motion/responsive). Prefixed so
+// they never collide with the app's global (earthy) styles.
+function ScopedStyles() {
+  return (
+    <style>{`
+      @keyframes dgs-glow { 0%,100%{ box-shadow:0 0 0 0 rgba(37,99,235,.22) } 50%{ box-shadow:0 0 0 8px rgba(37,99,235,.08) } }
+      @keyframes dgs-glow-ochre { 0%,100%{ box-shadow:0 0 0 0 rgba(188,108,37,.18), 0 24px 48px -36px rgba(17,24,39,.28) } 50%{ box-shadow:0 0 0 8px rgba(188,108,37,.07), 0 26px 50px -34px rgba(17,24,39,.3) } }
+      .dgs-glow { animation: dgs-glow 3.4s ease-in-out infinite }
+      .dgs-glow-ochre { animation: dgs-glow-ochre 3.8s ease-in-out infinite }
+      @media (max-width: 860px) {
+        .dgs-page { padding: 32px 20px 72px !important }
+        .dgs-cols { grid-template-columns: minmax(0,1fr) !important; gap: 52px !important }
+        .dgs-rail { position: static !important }
+        .dgs-head { flex-direction: column !important; align-items: flex-start !important; gap: 28px !important }
+        .dgs-stats { gap: 28px !important }
+        .dgs-user { display: none !important }
+      }
+      @media (prefers-reduced-motion: reduce) { .dgs-glow, .dgs-glow-ochre { animation: none !important } }
+    `}</style>
   );
 }
