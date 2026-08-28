@@ -634,7 +634,7 @@ enrollment / `advanceStep` machinery unchanged — AI only authors the template.
 | Concern | Choice | Notes |
 |---|---|---|
 | Roadmap generation | **Google Gemini `gemini-3.5-flash`** via `@google/genai` | JSON output (`responseMimeType: application/json`), Zod-validated; retries transient network blips. Model set by `ROADMAP_MODEL`. Server-side only. |
-| Embeddings | **OpenAI `text-embedding-3-small`** (1536-dim) | Anthropic has no first-party embeddings API. Provider is behind an `EmbeddingProvider` interface so it can be swapped (e.g. Voyage). |
+| Embeddings | **Google Gemini `gemini-embedding-001`** (1536-dim) | Same key as generation. `outputDimensionality: 1536` matches the pgvector column; `taskType` RETRIEVAL_DOCUMENT for chunks, RETRIEVAL_QUERY for queries. Behind an `EmbeddingProvider` interface so it can be swapped. |
 | PDF text | `pdfjs-dist` (or `pdf-parse`) | Per-page text extraction, server-side. |
 | Vector store | **Postgres + `pgvector`** | `vector(1536)` column; cosine distance (`<=>`) with an HNSW/IVFFlat index. |
 

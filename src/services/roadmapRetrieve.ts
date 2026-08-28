@@ -17,7 +17,7 @@ export async function retrieveContext(
   opts: { subjectId: string; gradeLevel: number | null; queryText: string; k?: number },
 ): Promise<RetrievedChunk[]> {
   const provider = getEmbeddingProvider();
-  const [qvec] = await provider.embed([opts.queryText]);
+  const [qvec] = await provider.embed([opts.queryText], "query");
   const rows = await prisma.$queryRawUnsafe<
     { content: string; pageStart: number | null; pageEnd: number | null; title: string; similarity: number }[]
   >(

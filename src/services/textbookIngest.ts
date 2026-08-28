@@ -6,7 +6,7 @@ import { getEmbeddingProvider, toVectorLiteral } from "@/lib/embeddings";
 // Ingest one textbook (SPEC §14.3): extract text → chunk → embed → store chunk
 // vectors → mark ready. Called fire-and-forget after upload; all failures are
 // captured on the textbook row (status=failed, error) so the UI can show them.
-const EMBED_BATCH = 64;
+const EMBED_BATCH = 16;
 
 export async function ingestTextbook(prisma: PrismaClient, textbookId: string, fileBuffer: Buffer): Promise<void> {
   await prisma.textbook.update({ where: { id: textbookId }, data: { status: "processing", error: null } });
