@@ -1,18 +1,19 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import { getEnv } from "./env";
 
-// Anthropic client for roadmap generation (SPEC §14.1). Model is claude-opus-5
-// by default (ROADMAP_MODEL). Streaming + adaptive thinking per the current API.
+// Google Gemini client for roadmap generation (SPEC §14.1). Model is
+// gemini-3.5-flash by default (ROADMAP_MODEL). JSON output is requested via
+// responseMimeType; callers validate the parsed object with Zod.
 
-let cached: Anthropic | null = null;
+let cached: GoogleGenAI | null = null;
 
-function getAnthropic(): Anthropic {
+function getGemini(): GoogleGenAI {
   if (cached) return cached;
   const env = getEnv();
-  if (!env.ANTHROPIC_API_KEY) {
-    throw new Error("ANTHROPIC_API_KEY is not set — required for roadmap generation (SPEC §14).");
+  if (!env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not set — required for roadmap generation (SPEC §14).");
   }
-  cached = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  cached = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY });
   return cached;
 }
 
@@ -22,33 +23,45 @@ export type GenerationResult = {
   model: string;
 };
 
-// Ask Claude for a single JSON object. We instruct strict-JSON in the system
-// prompt and parse the text ourselves (robust across SDK versions); callers
-// validate the parsed object with Zod. Streamed to avoid HTTP timeouts on large
-// roadmaps (per the API guidance for high max_tokens).
+const TRANSIENT = /fetch failed|ECONNRESET|ETIMEDOUT|network|socket hang up|EAI_AGAIN|503|overloaded/i;
+
+// Ask Gemini for a single JSON object. Retries transient network failures a
+// couple of times (this feature runs against Google's API, which can blip).
 export async function generateJson(opts: {
   system: string;
   user: string;
   maxTokens?: number;
 }): Promise<GenerationResult> {
   const env = getEnv();
-  const client = getAnthropic();
+  const ai = getGemini();
 
-  const stream = client.messages.stream({
-    model: env.ROADMAP_MODEL,
-    max_tokens: opts.maxTokens ?? 16000,
-    thinking: { type: "adaptive" },
-    system: opts.system,
-    messages: [{ role: "user", content: opts.user }],
-  });
-
-  const message = await stream.finalMessage();
-  const text = message.content.map((b) => (b.type === "text" ? b.text : "")).join("");
-  return {
-    text,
-    usage: { input: message.usage.input_tokens, output: message.usage.output_tokens },
-    model: env.ROADMAP_MODEL,
-  };
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await ai.models.generateContent({
+        model: env.ROADMAP_MODEL,
+        contents: opts.user,
+        config: {
+          systemInstruction: opts.system,
+          responseMimeType: "application/json",
+          maxOutputTokens: opts.maxTokens ?? 32000,
+          temperature: 0.4,
+        },
+      });
+      const usage = res.usageMetadata;
+      return {
+        text: res.text ?? "",
+        usage: { input: usage?.promptTokenCount ?? 0, output: usage?.candidatesTokenCount ?? 0 },
+        model: env.ROADMAP_MODEL,
+      };
+    } catch (err) {
+      lastErr = err;
+      const msg = (err as Error)?.message ?? String(err);
+      if (!TRANSIENT.test(msg) || attempt === 2) break;
+      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+    }
+  }
+  throw lastErr;
 }
 
 // Pull the first JSON object out of a model response (tolerates ```json fences

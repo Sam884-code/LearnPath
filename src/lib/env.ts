@@ -23,10 +23,10 @@ const baseSchema = z.object({
   RATE_LIMIT_REGISTER_MAX: z.string().optional(),
   // AI Knowledge Base (SPEC §14). Optional so the app boots without them; the KB
   // services require them at call time and fail with a clear message if absent.
-  ANTHROPIC_API_KEY: z.string().optional(),
-  OPENAI_API_KEY: z.string().optional(),
+  GEMINI_API_KEY: z.string().optional(), // roadmap generation (Google Gemini)
+  OPENAI_API_KEY: z.string().optional(), // embeddings
   EMBEDDING_MODEL: z.string().default("text-embedding-3-small"),
-  ROADMAP_MODEL: z.string().default("claude-opus-5"),
+  ROADMAP_MODEL: z.string().default("gemini-3.5-flash"),
 });
 
 // When STORAGE_DRIVER=r2, the R2 credentials become required.

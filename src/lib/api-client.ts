@@ -540,3 +540,56 @@ export function joinClassroom(code: string) {
 export function getMyClassrooms() {
   return apiFetch<{ classrooms: ApiStudentClassroom[] }>("/classroom/mine");
 }
+
+// ---- AI Knowledge Base (§14) ----
+
+export type ApiTextbook = {
+  id: string;
+  title: string;
+  subject: { id: string; title: string };
+  grade_level: number | null;
+  file_name: string;
+  page_count: number | null;
+  status: "uploaded" | "processing" | "ready" | "failed";
+  error: string | null;
+  chunk_count: number;
+  created_at: string;
+};
+
+export function teacherListTextbooks() {
+  return apiFetch<{ textbooks: ApiTextbook[] }>("/teacher/textbooks");
+}
+
+// Multipart upload — do NOT set Content-Type; the browser adds the boundary.
+export function teacherUploadTextbook(input: {
+  file: File;
+  subjectId: string;
+  title?: string;
+  gradeLevel?: number | null;
+}) {
+  const fd = new FormData();
+  fd.append("file", input.file);
+  fd.append("subject_id", input.subjectId);
+  if (input.title) fd.append("title", input.title);
+  if (input.gradeLevel != null) fd.append("grade_level", String(input.gradeLevel));
+  return apiFetch<{ textbook: { id: string; status: string } }>("/teacher/textbooks", {
+    method: "POST",
+    body: fd,
+  });
+}
+
+export function teacherDeleteTextbook(id: string) {
+  return apiFetch<void>(`/teacher/textbooks/${id}`, { method: "DELETE" });
+}
+
+export function teacherGenerateRoadmap(input: {
+  subjectId: string;
+  gradeLevel?: number | null;
+  track: "exam" | "depth";
+}) {
+  return apiFetch<{ templateId: string; generationId: string; stepCount: number }>("/teacher/roadmaps/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ subject_id: input.subjectId, grade_level: input.gradeLevel ?? null, track: input.track }),
+  });
+}
