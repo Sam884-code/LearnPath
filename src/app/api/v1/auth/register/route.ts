@@ -7,6 +7,7 @@ import { ApiError } from "@/lib/errors";
 import { setAuthCookie, signToken } from "@/lib/jwt";
 import { serializeUser } from "@/lib/serialize";
 import { RATE_LIMITS, clientIp, enforceRateLimit } from "@/lib/rateLimit";
+import { getEnv } from "@/lib/env";
 
 const BCRYPT_COST = 12;
 
@@ -15,6 +16,7 @@ const registerSchema = z.object({
   email: z.string().email("Must be a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   role: z.enum(["student", "teacher"]).optional(),
+  invite_code: z.string().optional(),
 });
 
 export const POST = withErrorHandling(async (req: NextRequest) => {
@@ -22,6 +24,15 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
 
   // SPEC.md §11.1: throttle mass-registration per IP.
   enforceRateLimit(`register:${clientIp(req)}`, RATE_LIMITS.register);
+
+  // Teacher self-registration is gated by an invite code (SPEC §11.3). If no
+  // TEACHER_INVITE_CODE is configured, teacher signup is disabled entirely.
+  if (body.role === "teacher") {
+    const expected = getEnv().TEACHER_INVITE_CODE;
+    if (!expected || body.invite_code !== expected) {
+      throw new ApiError(403, "INVALID_INVITE", "A valid teacher invite code is required");
+    }
+  }
 
   const existing = await prisma.user.findUnique({ where: { email: body.email } });
   if (existing) {

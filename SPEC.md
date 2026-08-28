@@ -683,11 +683,19 @@ enabled with `CREATE EXTENSION IF NOT EXISTS vector` in the migration.
 | POST | `/teacher/textbooks` | Upload a PDF; starts ingestion |
 | GET | `/teacher/textbooks` | List with `status` (+ chunk counts) |
 | DELETE | `/teacher/textbooks/:id` | Remove textbook + chunks + blob |
-| POST | `/teacher/roadmaps/generate` | Generate a draft template from the KB |
+| POST | `/teacher/roadmaps/generate` | **Start** a background generation → `{ generationId }` (202) |
+| GET | `/teacher/roadmaps/generations/:id` | Poll status (pending→processing→ready\|failed) + draft `template_id` |
 
 ### 14.5 Guardrails
 
 - All routes are `requireRole("teacher")`; keys server-side only.
+- **Teacher self-registration is invite-gated** (`TEACHER_INVITE_CODE`, §11.3);
+  unset = teacher signup disabled.
+- **Rate limits** (§11.1) on upload / generate / classroom-join, keyed per user.
+- Uploads are validated by **PDF magic bytes** (`%PDF-`), not just extension.
+- **Ingestion and generation run in the background** (fire-and-forget) with
+  status polling — the request returns immediately (202) so a slow model call
+  never blocks or times out the HTTP request.
 - Generation output is a **draft**, never auto-published or auto-enrolled — a
   human teacher always reviews before students see it.
 - Retrieval is scoped to the requesting subject/grade; no cross-subject leakage.

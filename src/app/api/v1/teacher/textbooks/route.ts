@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { withErrorHandling } from "@/lib/api";
 import { requireAuth, requireRole } from "@/lib/auth";
 import { ApiError } from "@/lib/errors";
+import { RATE_LIMITS, enforceRateLimit } from "@/lib/rateLimit";
 import { getStorageDriver } from "@/lib/storage";
 import { ingestTextbook } from "@/services/textbookIngest";
 
@@ -36,6 +37,7 @@ export const GET = withErrorHandling(async (req: NextRequest) => {
 // background (status uploaded → processing → ready | failed).
 export const POST = withErrorHandling(async (req: NextRequest) => {
   const ctx = requireRole(await requireAuth(req), "teacher");
+  enforceRateLimit(`textbook-upload:${ctx.userId}`, RATE_LIMITS.textbookUpload);
 
   const form = await req.formData();
   const file = form.get("file");
@@ -57,6 +59,10 @@ export const POST = withErrorHandling(async (req: NextRequest) => {
   const buffer = Buffer.from(await file.arrayBuffer());
   if (buffer.length > MAX_BYTES) {
     throw new ApiError(400, "FILE_TOO_LARGE", "Textbook exceeds the 50 MB limit");
+  }
+  // Verify real PDF magic bytes ("%PDF-"), not just the extension/mime.
+  if (buffer.subarray(0, 5).toString("latin1") !== "%PDF-") {
+    throw new ApiError(400, "UNSUPPORTED_FILE_TYPE", "File is not a valid PDF");
   }
 
   const key = `textbooks/${randomUUID()}-${file.name}`;

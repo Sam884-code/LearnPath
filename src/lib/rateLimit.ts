@@ -53,6 +53,10 @@ function envInt(name: string, fallback: number): number {
 export const RATE_LIMITS = {
   login: { max: envInt("RATE_LIMIT_LOGIN_MAX", 5), windowMs: 15 * 60_000 },
   register: { max: envInt("RATE_LIMIT_REGISTER_MAX", 10), windowMs: 60 * 60_000 },
+  // AI Knowledge Base (SPEC §14) — protect quota/cost. Keyed per teacher.
+  textbookUpload: { max: envInt("RATE_LIMIT_UPLOAD_MAX", 20), windowMs: 60 * 60_000 },
+  roadmapGenerate: { max: envInt("RATE_LIMIT_GENERATE_MAX", 10), windowMs: 60 * 60_000 },
+  classroomJoin: { max: envInt("RATE_LIMIT_JOIN_MAX", 20), windowMs: 60 * 60_000 },
 } as const;
 
 // Best-effort client IP; Vercel populates x-forwarded-for. Falls back to a

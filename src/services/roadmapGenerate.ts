@@ -26,15 +26,16 @@ const roadmapSchema = z.object({
   steps: z.array(stepSchema).min(3).max(20),
 });
 
-export type GeneratedRoadmap = { templateId: string; generationId: string; stepCount: number };
+type GenOpts = { subjectId: string; gradeLevel: number | null; track: Track; teacherId: string };
 
-// Retrieve KB context → ask Claude for a structured roadmap → validate → write a
-// DRAFT RoadmapTemplate + steps (+ quiz questions) the teacher then reviews and
-// publishes (SPEC §14.3). The template is never auto-published.
-export async function generateRoadmap(
+// Start a generation in the background (SPEC §14.3): create the audit row, return
+// its id immediately, and run the heavy retrieve→generate→map work detached. The
+// teacher UI polls the generation's status. The template it produces is a DRAFT
+// (never auto-published).
+export async function startRoadmapGeneration(
   prisma: PrismaClient,
-  opts: { subjectId: string; gradeLevel: number | null; track: Track; teacherId: string },
-): Promise<GeneratedRoadmap> {
+  opts: GenOpts,
+): Promise<{ generationId: string }> {
   const env = getEnv();
   const subject = await prisma.subject.findUnique({ where: { id: opts.subjectId } });
   if (!subject) throw new ApiError(404, "NOT_FOUND", "Subject not found");
@@ -50,7 +51,16 @@ export async function generateRoadmap(
     },
   });
 
+  void runRoadmapGeneration(prisma, gen.id, opts).catch(() => {});
+  return { generationId: gen.id };
+}
+
+// The heavy worker. Runs detached; records success/failure on the generation row
+// (never throws to the caller).
+async function runRoadmapGeneration(prisma: PrismaClient, genId: string, opts: GenOpts): Promise<void> {
   try {
+    await prisma.roadmapGeneration.update({ where: { id: genId }, data: { status: "processing" } });
+    const subject = await prisma.subject.findUniqueOrThrow({ where: { id: opts.subjectId } });
     const gradePart = opts.gradeLevel ? `, grade ${opts.gradeLevel}` : "";
     const query = `${subject.title}${gradePart}, ${opts.track} track learning roadmap key concepts`;
     const context = await retrieveContext(prisma, {
@@ -133,7 +143,7 @@ export async function generateRoadmap(
     }
 
     await prisma.roadmapGeneration.update({
-      where: { id: gen.id },
+      where: { id: genId },
       data: {
         status: "ready",
         templateId: template.id,
@@ -141,13 +151,10 @@ export async function generateRoadmap(
         outputTokens: result.usage.output,
       },
     });
-
-    return { templateId: template.id, generationId: gen.id, stepCount: parsed.steps.length };
   } catch (err) {
     await prisma.roadmapGeneration.update({
-      where: { id: gen.id },
+      where: { id: genId },
       data: { status: "failed", error: (err as Error).message.slice(0, 500) },
     });
-    throw err;
   }
 }

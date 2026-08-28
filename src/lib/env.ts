@@ -7,6 +7,9 @@ import { z } from "zod";
 const baseSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required (Neon Postgres connection string)"),
   JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 characters"),
+  // When set, teacher self-registration requires this invite code. When unset,
+  // teacher self-registration is disabled (students only).
+  TEACHER_INVITE_CODE: z.string().optional(),
   NEXT_PUBLIC_APP_URL: z.string().url("NEXT_PUBLIC_APP_URL must be a full URL, e.g. https://your-app.vercel.app"),
   STORAGE_DRIVER: z.enum(["local", "r2"]).default("local"),
   LOCAL_STORAGE_PATH: z.string().default("./storage"),

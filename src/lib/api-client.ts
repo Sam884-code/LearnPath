@@ -102,6 +102,7 @@ export function register(input: {
   email: string;
   password: string;
   role?: "student" | "teacher";
+  invite_code?: string;
 }) {
   return apiFetch<{ token: string; user: ApiUser }>("/auth/register", {
     method: "POST",
@@ -582,14 +583,26 @@ export function teacherDeleteTextbook(id: string) {
   return apiFetch<void>(`/teacher/textbooks/${id}`, { method: "DELETE" });
 }
 
+export type ApiGenerationStatus = {
+  status: "pending" | "processing" | "ready" | "failed";
+  template_id: string | null;
+  step_count: number | null;
+  error: string | null;
+};
+
+// Starts a background generation; returns the id to poll with teacherGetGeneration.
 export function teacherGenerateRoadmap(input: {
   subjectId: string;
   gradeLevel?: number | null;
   track: "exam" | "depth";
 }) {
-  return apiFetch<{ templateId: string; generationId: string; stepCount: number }>("/teacher/roadmaps/generate", {
+  return apiFetch<{ generationId: string }>("/teacher/roadmaps/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ subject_id: input.subjectId, grade_level: input.gradeLevel ?? null, track: input.track }),
   });
+}
+
+export function teacherGetGeneration(id: string) {
+  return apiFetch<ApiGenerationStatus>(`/teacher/roadmaps/generations/${id}`);
 }

@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -24,7 +25,13 @@ export default function RegisterPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await register({ name, email, password, role });
+      await register({
+        name,
+        email,
+        password,
+        role,
+        invite_code: role === "teacher" ? inviteCode : undefined,
+      });
       // Teachers go to their workspace; new students have no enrollment yet, so
       // they start onboarding.
       router.replace(role === "teacher" ? "/teacher" : "/onboarding");
@@ -67,6 +74,17 @@ export default function RegisterPage() {
               onClick={() => setRole("teacher")}
             />
           </fieldset>
+
+          {role === "teacher" && (
+            <TextField
+              label={t("auth.inviteCode")}
+              type="text"
+              required
+              value={inviteCode}
+              hint={t("auth.inviteCodeHint")}
+              onChange={(e) => setInviteCode(e.target.value)}
+            />
+          )}
 
           <TextField
             label={t("auth.name")}

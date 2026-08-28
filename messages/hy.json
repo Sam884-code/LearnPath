@@ -76,7 +76,9 @@
     "roleStudent": "Աշակերտ",
     "roleStudentDesc": "Սովորում եմ իմ ուղով",
     "roleTeacher": "Ուսուցիչ",
-    "roleTeacherDesc": "Ստեղծում եմ ուղիներ և գնահատում"
+    "roleTeacherDesc": "Ստեղծում եմ ուղիներ և գնահատում",
+    "inviteCode": "Ուսուցչի հրավերի կոդ",
+    "inviteCodeHint": "Ուսուցչի հաշիվ ստեղծելու համար անհրաժեշտ է հրավերի կոդ։"
   },
   "onboarding": {
     "progress": "{current}-ը {total}-ից",
@@ -310,6 +312,7 @@
     "generateButton": "Ստեղծել ուղի",
     "generating": "Ստեղծվում է... (կարող է տևել մինչև մեկ րոպե)",
     "generateSuccess": "Ուղին ստեղծվեց՝ {n} քայլ",
+    "generateFailed": "Ուղու ստեղծումը ձախողվեց։ Համոզվիր, որ այս առարկայի համար վերբեռնել ես դասագիրք։",
     "openDraft": "Բացել սևագիրը"
   },
   "classroom": {
@@ -334,6 +337,7 @@
     "NO_TEMPLATE_AVAILABLE": "Այս առարկայի համար դեռ ուղի պատրաստ չէ",
     "ALREADY_ENROLLED": "Դու արդեն սկսել ես այս առարկան",
     "CLASSROOM_NOT_FOUND": "Այդ կոդով դասարան չգտնվեց։ Ստուգիր կոդը։",
+    "INVALID_INVITE": "Ուսուցչի հրավերի կոդը սխալ է կամ բացակայում է։",
     "FILE_TOO_LARGE": "Ֆայլը չափազանց մեծ է",
     "UNSUPPORTED_FILE_TYPE": "Ֆայլի այս տեսակը թույլատրված չէ",
     "VALIDATION_ERROR": "Տվյալները սխալ են լրացված",

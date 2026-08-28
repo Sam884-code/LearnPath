@@ -11,6 +11,7 @@ import {
   teacherUploadTextbook,
   teacherDeleteTextbook,
   teacherGenerateRoadmap,
+  teacherGetGeneration,
   type ApiSubject,
   type ApiTextbook,
 } from "@/lib/api-client";
@@ -294,16 +295,33 @@ function GeneratePanel({ t, subjects, onError }: { t: T; subjects: ApiSubject[];
     setDraftId(null);
     onError(null);
     try {
-      const res = await teacherGenerateRoadmap({
+      const { generationId } = await teacherGenerateRoadmap({
         subjectId,
         gradeLevel: grade ? Number.parseInt(grade, 10) : null,
         track,
       });
-      toast.success(t("teacher.generateSuccess", { n: res.stepCount }));
-      setDraftId(res.templateId);
+      // Poll the background generation until it finishes.
+      const poll = async () => {
+        try {
+          const s = await teacherGetGeneration(generationId);
+          if (s.status === "ready") {
+            toast.success(t("teacher.generateSuccess", { n: s.step_count ?? 0 }));
+            setDraftId(s.template_id);
+            setGenerating(false);
+          } else if (s.status === "failed") {
+            onError(t("teacher.generateFailed"));
+            setGenerating(false);
+          } else {
+            window.setTimeout(poll, 3000);
+          }
+        } catch (err) {
+          onError(errorMessage(t, err));
+          setGenerating(false);
+        }
+      };
+      window.setTimeout(poll, 3000);
     } catch (err) {
       onError(errorMessage(t, err));
-    } finally {
       setGenerating(false);
     }
   }
