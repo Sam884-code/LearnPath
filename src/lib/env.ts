@@ -51,7 +51,13 @@ let cached: Env | null = null;
 // that lists every problem. Called once on server boot (instrumentation.ts).
 export function validateEnv(): Env {
   if (cached) return cached;
-  const result = schema.safeParse(process.env);
+  // Treat blank env vars as unset — Vercel surfaces empty values as "", which
+  // would otherwise fail optional-enum checks (e.g. LOG_LEVEL) or mask a
+  // genuinely-missing required var.
+  const cleaned = Object.fromEntries(
+    Object.entries(process.env).map(([k, v]) => [k, v === "" ? undefined : v]),
+  );
+  const result = schema.safeParse(cleaned);
   if (!result.success) {
     const lines = result.error.issues.map((i) => `  - ${i.path.join(".") || "env"}: ${i.message}`);
     throw new Error(`Invalid environment configuration:\n${lines.join("\n")}`);
