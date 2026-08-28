@@ -15,10 +15,18 @@ const baseSchema = z.object({
   R2_SECRET_ACCESS_KEY: z.string().optional(),
   R2_BUCKET_NAME: z.string().optional(),
   R2_PUBLIC_URL: z.string().optional(),
+  // Direct (non-pooled) DB connection for Prisma migrations (SPEC §14 / Supabase).
+  DIRECT_URL: z.string().optional(),
   // Observability (SPEC.md §11.2) and rate-limit overrides (§11.1). All optional.
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error", "silent"]).optional(),
   RATE_LIMIT_LOGIN_MAX: z.string().optional(),
   RATE_LIMIT_REGISTER_MAX: z.string().optional(),
+  // AI Knowledge Base (SPEC §14). Optional so the app boots without them; the KB
+  // services require them at call time and fail with a clear message if absent.
+  ANTHROPIC_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
+  EMBEDDING_MODEL: z.string().default("text-embedding-3-small"),
+  ROADMAP_MODEL: z.string().default("claude-opus-5"),
 });
 
 // When STORAGE_DRIVER=r2, the R2 credentials become required.

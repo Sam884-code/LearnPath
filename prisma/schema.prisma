@@ -6,7 +6,8 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [citext]
+  directUrl  = env("DIRECT_URL")
+  extensions = [citext, vector]
 }
 
 enum Role {
@@ -59,20 +60,25 @@ model User {
   // Classroom: a teacher owns one classroom; a student joins many.
   classroom            Classroom?            @relation("ClassroomTeacher")
   classroomMemberships ClassroomMembership[] @relation("ClassroomStudent")
+  // AI Knowledge Base (§14)
+  textbooks            Textbook[]            @relation("TextbookUploader")
+  roadmapGenerations   RoadmapGeneration[]   @relation("GenerationCreator")
 
   @@map("users")
 }
 
 model Subject {
-  id          String            @id @default(uuid()) @db.Uuid
-  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
-  title       String
-  slug        String            @unique
-  icon        String?
-  isActive    Boolean           @default(true) @map("is_active")
-  templates   RoadmapTemplate[]
-  enrollments Enrollment[]
+  id                 String              @id @default(uuid()) @db.Uuid
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  title              String
+  slug               String              @unique
+  icon               String?
+  isActive           Boolean             @default(true) @map("is_active")
+  templates          RoadmapTemplate[]
+  enrollments        Enrollment[]
+  textbooks          Textbook[]
+  roadmapGenerations RoadmapGeneration[]
 
   @@map("subjects")
 }
@@ -277,4 +283,77 @@ model ClassroomMembership {
   @@unique([classroomId, studentId])
   @@index([studentId])
   @@map("classroom_memberships")
+}
+
+// --- AI Knowledge Base (SPEC §14) ---
+
+enum TextbookStatus {
+  uploaded
+  processing
+  ready
+  failed
+}
+
+// A PDF textbook a teacher uploads as source material for AI roadmap generation.
+model Textbook {
+  id           String          @id @default(uuid()) @db.Uuid
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  subjectId    String          @map("subject_id") @db.Uuid
+  gradeLevel   Int?            @map("grade_level")
+  title        String
+  fileKey      String          @map("file_key")
+  fileName     String          @map("file_name")
+  pageCount    Int?            @map("page_count")
+  status       TextbookStatus  @default(uploaded)
+  error        String?
+  uploadedById String          @map("uploaded_by") @db.Uuid
+  subject      Subject         @relation(fields: [subjectId], references: [id])
+  uploadedBy   User            @relation("TextbookUploader", fields: [uploadedById], references: [id])
+  chunks       TextbookChunk[]
+
+  @@index([subjectId, gradeLevel])
+  @@map("textbooks")
+}
+
+// A chunk of extracted textbook text with its embedding vector (pgvector).
+// The `embedding` column is `vector(1536)`; Prisma has no native type for it,
+// so it is Unsupported and read/written via $queryRaw. The HNSW cosine index is
+// added in the migration SQL (Prisma cannot express vector index operators).
+model TextbookChunk {
+  id         String                       @id @default(uuid()) @db.Uuid
+  createdAt  DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+  textbookId String                       @map("textbook_id") @db.Uuid
+  chunkIndex Int                          @map("chunk_index")
+  content    String
+  pageStart  Int?                         @map("page_start")
+  pageEnd    Int?                         @map("page_end")
+  tokenCount Int?                         @map("token_count")
+  embedding  Unsupported("vector(1536)")?
+  textbook   Textbook                     @relation(fields: [textbookId], references: [id], onDelete: Cascade)
+
+  @@unique([textbookId, chunkIndex])
+  @@index([textbookId])
+  @@map("textbook_chunks")
+}
+
+// Audit row for one AI roadmap-generation run (for cost visibility + re-runs).
+model RoadmapGeneration {
+  id           String   @id @default(uuid()) @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  subjectId    String   @map("subject_id") @db.Uuid
+  gradeLevel   Int?     @map("grade_level")
+  track        Track
+  model        String
+  status       String   @default("pending")
+  error        String?
+  promptTokens Int?     @map("prompt_tokens")
+  outputTokens Int?     @map("output_tokens")
+  templateId   String?  @map("template_id") @db.Uuid
+  createdById  String   @map("created_by") @db.Uuid
+  subject      Subject  @relation(fields: [subjectId], references: [id])
+  createdBy    User     @relation("GenerationCreator", fields: [createdById], references: [id])
+
+  @@index([subjectId])
+  @@map("roadmap_generations")
 }
